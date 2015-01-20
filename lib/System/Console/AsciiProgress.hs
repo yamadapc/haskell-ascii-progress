@@ -59,15 +59,19 @@ newProgressBar opts = do
 
 render :: Options -> Int -> IO ()
 render opts completed = do
-    let percentCompleted = (fromIntegral completed :: Double) / fromIntegral (pgTotal opts)
-        percentRemaining = 1 - percentCompleted
-        bcompleted = percentToBlockSize percentCompleted
-        bremaining = percentToBlockSize percentRemaining
-        progressStr = replicate bcompleted '=' ++
-                      replicate bremaining ' '
+    let progressStr = getProgressStr opts completed
     setCursorColumn 0
     putStr progressStr
   where
+
+getProgressStr :: Options -> Int -> String
+getProgressStr opts completed =
+    replicate bcompleted '=' ++ replicate bremaining ' '
+  where
+    percentCompleted = (fromIntegral completed :: Double) / fromIntegral (pgTotal opts)
+    percentRemaining = 1 - percentCompleted
+    bcompleted = percentToBlockSize percentCompleted
+    bremaining = percentToBlockSize percentRemaining
     percentToBlockSize p = floor $ fromIntegral (pgWidth opts) * p
 
 complete :: ProgressBar -> IO Bool

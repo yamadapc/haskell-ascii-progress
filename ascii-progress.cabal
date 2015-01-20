@@ -14,7 +14,8 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     System.Console.AsciiProgress
-  build-depends:       ansi-terminal
+  build-depends:       MissingH
+                     , ansi-terminal
                      , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3
@@ -23,7 +24,8 @@ library
 
 executable example
   main-is:             Example.hs
-  build-depends:       ansi-terminal
+  build-depends:       MissingH
+                     , ansi-terminal
                      , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3
@@ -34,7 +36,8 @@ executable example
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
-  build-depends:       ansi-terminal
+  build-depends:       MissingH
+                     , ansi-terminal
                      , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3

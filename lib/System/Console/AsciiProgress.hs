@@ -6,6 +6,7 @@ module System.Console.AsciiProgress
     , newProgressBar
     , tick
     , tickN
+    , getProgressStr
     -- Re-exports:
     , Default(..)
     )
@@ -18,6 +19,7 @@ import Control.Concurrent.Async (Async, async, poll)
 import Control.Monad (when)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
+import Data.List.Utils (replace)
 import System.Console.ANSI (setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 
@@ -28,14 +30,16 @@ data ProgressBar = ProgressBar { pgFuture  :: Async ()
                                }
   deriving(Eq)
 
-data Options = Options { pgTotal :: Int
+data Options = Options { pgFormat :: String
+                       , pgTotal :: Int
                        , pgWidth :: Int
                        }
   deriving(Eq, Ord, Show)
 
 instance Default Options where
-    def = Options { pgWidth = 80
+    def = Options { pgFormat = ":bar"
                   , pgTotal = 20
+                  , pgWidth = 80
                   }
 
 newProgressBar :: Options -> IO ProgressBar
@@ -62,17 +66,25 @@ render opts completed = do
     let progressStr = getProgressStr opts completed
     setCursorColumn 0
     putStr progressStr
-  where
 
 getProgressStr :: Options -> Int -> String
 getProgressStr opts completed =
+    let fmt = pgFormat opts
+        -- Use TJ Holowaychuk's approach
+        barWidth = pgWidth opts - length (replace ":bar" "" fmt)
+      in replace ":bar" (getBarStr barWidth percentCompleted) fmt
+  where
+    percentCompleted = (fromIntegral completed :: Double) /
+                       fromIntegral (pgTotal opts)
+
+getBarStr :: (RealFrac s, Integral a) => a -> s -> String
+getBarStr width percentCompleted =
     replicate bcompleted '=' ++ replicate bremaining ' '
   where
-    percentCompleted = (fromIntegral completed :: Double) / fromIntegral (pgTotal opts)
     percentRemaining = 1 - percentCompleted
     bcompleted = percentToBlockSize percentCompleted
     bremaining = percentToBlockSize percentRemaining
-    percentToBlockSize p = floor $ fromIntegral (pgWidth opts) * p
+    percentToBlockSize p = floor $ fromIntegral width * p
 
 complete :: ProgressBar -> IO Bool
 complete pg = isJust <$> poll (pgFuture pg)

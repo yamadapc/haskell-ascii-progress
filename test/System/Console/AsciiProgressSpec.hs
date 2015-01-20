@@ -17,7 +17,17 @@ spec =
         it "replaces `:bar` in the `pgFormat` format `String`" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
+                           , pgFormat = "working [:bar]"
+                           }
+            getProgressStr opts 10 `shouldBe`
+                "working [=========                                                                                 ]"
+
+        it "uses the options' completed and pending characters" $ do
+            let opts = def { pgTotal = 100
+                           , pgWidth = 100
+                           , pgCompletedChar = '*'
+                           , pgPendingChar = '-'
                            , pgFormat = ":bar"
                            }
-            getProgressStr opts { pgFormat = "working [:bar]" } 10 `shouldBe`
-                "working [=========                                                                                 ]"
+            getProgressStr opts 10 `shouldBe`
+                "**********------------------------------------------------------------------------------------------"

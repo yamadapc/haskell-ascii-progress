@@ -31,13 +31,17 @@ data ProgressBar = ProgressBar { pgFuture  :: Async ()
   deriving(Eq)
 
 data Options = Options { pgFormat :: String
+                       , pgCompletedChar :: Char
+                       , pgPendingChar :: Char
                        , pgTotal :: Int
                        , pgWidth :: Int
                        }
   deriving(Eq, Ord, Show)
 
 instance Default Options where
-    def = Options { pgFormat = ":bar"
+    def = Options { pgFormat = "[:bar]"
+                  , pgCompletedChar = '='
+                  , pgPendingChar = ' '
                   , pgTotal = 20
                   , pgWidth = 80
                   }
@@ -72,19 +76,12 @@ getProgressStr opts completed =
     let fmt = pgFormat opts
         -- Use TJ Holowaychuk's approach
         barWidth = pgWidth opts - length (replace ":bar" "" fmt)
-      in replace ":bar" (getBarStr barWidth percentCompleted) fmt
+        barStr = getBarStr (pgCompletedChar opts) (pgPendingChar opts) barWidth
+                           percentCompleted
+      in replace ":bar" barStr fmt
   where
     percentCompleted = (fromIntegral completed :: Double) /
                        fromIntegral (pgTotal opts)
-
-getBarStr :: (RealFrac s, Integral a) => a -> s -> String
-getBarStr width percentCompleted =
-    replicate bcompleted '=' ++ replicate bremaining ' '
-  where
-    percentRemaining = 1 - percentCompleted
-    bcompleted = percentToBlockSize percentCompleted
-    bremaining = percentToBlockSize percentRemaining
-    percentToBlockSize p = floor $ fromIntegral width * p
 
 complete :: ProgressBar -> IO Bool
 complete pg = isJust <$> poll (pgFuture pg)
@@ -94,3 +91,12 @@ tick pg = writeChan (pgChannel pg) Nothing
 
 tickN :: ProgressBar -> Int -> IO ()
 tickN pg n = writeChan (pgChannel pg) (Just n)
+
+getBarStr :: (RealFrac s, Integral a) => Char -> Char -> a -> s -> String
+getBarStr completedChar pendingChar width percentCompleted =
+    replicate bcompleted completedChar ++ replicate bremaining pendingChar
+  where
+    percentRemaining = 1 - percentCompleted
+    bcompleted = percentToBlockSize percentCompleted
+    bremaining = percentToBlockSize percentRemaining
+    percentToBlockSize p = floor $ fromIntegral width * p

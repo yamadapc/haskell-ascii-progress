@@ -1,7 +1,8 @@
 ascii-progress
 ==============
 - - -
-A simple Haskell progress bar for the console.
+A simple Haskell progress bar for the console. Heavily borrows from TJ
+Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).
 
 ## Usage
 ```haskell

@@ -5,7 +5,7 @@ import System.Console.AsciiProgress (Options(..), complete, def,
 
 main :: IO ()
 main = do
-    pg <- newProgressBar def { pgWidth = 50 }
+    pg <- newProgressBar def { pgWidth = 100 }
     loop pg
   where
     loop pg = do

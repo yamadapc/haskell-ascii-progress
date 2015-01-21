@@ -14,6 +14,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     System.Console.AsciiProgress
+                     , System.Console.AsciiProgress.Internal
   build-depends:       MissingH
                      , ansi-terminal
                      , async >= 2.0.1.5

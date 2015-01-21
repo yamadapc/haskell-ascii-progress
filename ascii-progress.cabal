@@ -19,6 +19,7 @@ library
                      , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3
+                     , time >= 1.4.2
   hs-source-dirs:      lib
   default-language:    Haskell2010
 
@@ -29,6 +30,7 @@ executable example
                      , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3
+                     , time >= 1.4.2
   hs-source-dirs:      lib
                      , bin
   default-language:    Haskell2010
@@ -42,6 +44,7 @@ test-suite hspec
                      , base >=4.7 && <4.8
                      , data-default >= 0.5.3
                      , hspec >=2.1 && <3
+                     , time >= 1.4.2
   hs-source-dirs:      lib
                      , test
   default-language:    Haskell2010

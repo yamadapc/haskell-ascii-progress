@@ -20,6 +20,8 @@ import Control.Monad (when)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
 import Data.List.Utils (replace)
+import Data.Time.Clock
+import Text.Printf
 import System.Console.ANSI (setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 
@@ -39,7 +41,8 @@ data Options = Options { pgFormat :: String
   deriving(Eq, Ord, Show)
 
 instance Default Options where
-    def = Options { pgFormat = "[:bar]"
+    def = Options { pgFormat = "Working :percent [:bar] :current/:total " ++
+                               "(for :elapsed, :eta remaining)"
                   , pgCompletedChar = '='
                   , pgPendingChar = ' '
                   , pgTotal = 20
@@ -51,35 +54,54 @@ newProgressBar opts = do
     hSetBuffering stdout NoBuffering
     mcompleted <- newMVar 0
     chan <- newChan
-    future <- async $ start mcompleted chan
+    initTime <- getCurrentTime
+    future <- async $ start mcompleted chan initTime
     return $ ProgressBar future chan opts mcompleted
   where
-    start mcompleted chan = do
+    start mcompleted chan initTime = do
         c <- readMVar mcompleted
         when (c < pgTotal opts) $ do
-            m <- readChan chan
-            handleMessage mcompleted m
-            start mcompleted chan
-    handleMessage mcompleted (Just n) = do
-        c <- modifyMVar mcompleted (\c -> let c' = c + n in return (c', c'))
-        render opts c
-    handleMessage mcompleted Nothing = handleMessage mcompleted (Just 1)
+            readChan chan >>= handleMessage
+            start mcompleted chan initTime
+      where
+        handleMessage (Just n) = do
+            c <- modifyMVar mcompleted (\c -> let c' = c + n in return (c', c'))
+            render initTime opts c
+        handleMessage Nothing = handleMessage (Just 1)
 
-render :: Options -> Int -> IO ()
-render opts completed = do
-    let progressStr = getProgressStr opts completed
+render :: (PrintfArg a, Integral a)
+       => UTCTime -> Options -> a -> IO ()
+render initTime opts completed = do
+    currentTime <- getCurrentTime
+    let progressStr = getProgressStr currentTime initTime opts completed
     setCursorColumn 0
     putStr progressStr
 
-getProgressStr :: Options -> Int -> String
-getProgressStr opts completed =
+getProgressStr :: (PrintfArg a, Integral a)
+               => UTCTime -> UTCTime -> Options -> a -> String
+getProgressStr currentTime initTime opts completed =
     let fmt = pgFormat opts
+        elapsed = diffUTCTime currentTime initTime
+        percent = floor (100 * (fromIntegral completed :: Double) /
+                         fromIntegral (pgTotal opts)) :: Int
         -- Use TJ Holowaychuk's approach
-        barWidth = pgWidth opts - length (replace ":bar" "" fmt)
-        barStr = getBarStr (pgCompletedChar opts) (pgPendingChar opts) barWidth
+        tmpStr = replaceMany [ (":elapsed", printf "%3.1f"
+                                            (realToFrac elapsed :: Double))
+                             , (":current", printf "%3d" completed)
+                             , (":total", printf "%3d" (pgTotal opts))
+                             , (":percent", printf "%3d%%" percent)
+                             ]
+                             fmt
+        barWidth = pgWidth opts - length (replace ":bar" "" tmpStr)
+        barStr = getBarStr (pgCompletedChar opts)
+                           (pgPendingChar opts)
+                           barWidth
                            percentCompleted
-      in replace ":bar" barStr fmt
+      in replace ":bar" barStr tmpStr
   where
+    replaceMany pairs target = foldr (\(old, new) m -> replace old new m)
+                                     target
+                                     pairs
     percentCompleted = (fromIntegral completed :: Double) /
                        fromIntegral (pgTotal opts)
 

@@ -8,7 +8,7 @@ Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).
 ```haskell
 import Control.Concurrent (threadDelay)
 import Control.Monad (unless)
-import System.Console.AsciiProgress (Options(..), complete, def,
+import System.Console.AsciiProgress (Options(..), isComplete, def,
                                      newProgressBar, tick)
 
 main :: IO ()
@@ -17,7 +17,7 @@ main = do
     loop pg
   where
     loop pg = do
-        b <- complete pg
+        b <- isComplete pg
         unless b $ do
             threadDelay $ 200 * 1000
             tick pg

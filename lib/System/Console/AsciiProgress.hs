@@ -26,7 +26,7 @@ import System.IO (BufferMode(..), hSetBuffering, stdout)
 data ProgressBar = ProgressBar { pgFuture  :: Async ()
                                , pgChannel :: Chan (Maybe Int)
                                , pgOptions :: Options
-                               , pgComplete :: MVar Int
+                               , pgCompleted :: MVar Int
                                }
   deriving(Eq)
 
@@ -97,6 +97,5 @@ getBarStr completedChar pendingChar width percentCompleted =
     replicate bcompleted completedChar ++ replicate bremaining pendingChar
   where
     percentRemaining = 1 - percentCompleted
-    bcompleted = percentToBlockSize percentCompleted
-    bremaining = percentToBlockSize percentRemaining
-    percentToBlockSize p = floor $ fromIntegral width * p
+    bcompleted = ceiling $ fromIntegral width * percentCompleted
+    bremaining = floor $ fromIntegral width * percentRemaining

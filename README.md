@@ -4,6 +4,8 @@ ascii-progress
 A simple Haskell progress bar for the console. Heavily borrows from TJ
 Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).
 
+![demo](/demo.gif)
+
 ## Usage
 ```haskell
 import Control.Concurrent (threadDelay)

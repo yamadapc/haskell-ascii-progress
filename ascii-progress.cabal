@@ -1,7 +1,13 @@
 name:                ascii-progress
-version:             0.1.0.0
+version:             0.1.0.3
 synopsis:            A simple progress bar for the console.
--- description:         
+description:
+    A simple Haskell progress bar for the console. Heavily borrows from TJ
+    Holowaychuk's Node.JS project
+    <https://github.com/tj/node-progress progress>
+    .
+    <https://github.com/yamadapc/haskell-ascii-progress github>
+
 homepage:            https://github.com/yamadapc/haskell-ascii-progress
 license:             GPL-2
 license-file:        LICENSE

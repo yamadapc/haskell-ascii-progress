@@ -36,6 +36,12 @@ main = do
             loop pg
 ```
 
+## Multiple progress bar support
+Though still rudimentary, there's support for running multiple concurrent
+progress bars. The [`multi-example`](/bin/MultiExample.hs) shows off this
+feature:
+![demo-multi](/demo-multi.gif)
+
 ## Examples
 The [bin](/bin) directory contains the example above and a more complex example
 which uses `http-conduit` to download an image from imgur, printing the
@@ -82,6 +88,10 @@ The total amount of ticks for the bar to be completed
 
 ### `pgWidth :: Int`
 The progress bar's total width in columns
+
+### `pgOnCompletion :: IO ()`
+An IO action to be executed on completion, with the cursor set at progress
+bar's line
 
 ## License
 This code is licensed under the GPLv2 license for Pedro Tacla Yamada. For more

@@ -6,7 +6,6 @@ module System.Console.AsciiProgress.Internal
 import Control.Concurrent (Chan, MVar, newChan, newEmptyMVar, newMVar,
                            readMVar, tryPutMVar, tryReadMVar)
 import Data.Default (Default(..))
-import Data.List.Utils (replace)
 import Data.Time.Clock
 import Text.Printf
 
@@ -147,6 +146,28 @@ getEta completed remaining elapsed = averageSecsPerTick * fromIntegral remaining
 -- "bazbiz"
 replaceMany :: Eq a => [([a], [a])] -> [a] -> [a]
 replaceMany pairs target = foldr (uncurry replace) target pairs
+
+-- |
+-- Replaces a subsequence by another in a sequence
+--
+-- Taken from http://bluebones.net/2007/01/replace-in-haskell/
+--
+-- >>> replace "foo" "baz" "foobar"
+-- "bazbar"
+-- >>> replace "some" "thing" "something something"
+-- "thingthing thingthing"
+-- >>> replace "not" "" "something"
+-- "something"
+-- >>> replace "" "here" "something"
+-- "heresomething"
+replace :: Eq a => [a] -> [a] -> [a] -> [a]
+replace _ _ [] = []
+replace [] new target = new ++ target
+replace old new target@(t:ts) =
+  if take len target == old
+      then new ++ replace old new (drop len target)
+      else t : replace old new ts
+  where len = length old
 
 -- |
 -- Forces an MVar's contents to be read or swaped by a default value, even if

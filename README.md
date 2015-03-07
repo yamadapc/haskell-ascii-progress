@@ -1,10 +1,20 @@
 ascii-progress
 ==============
+[![hackage version](https://img.shields.io/hackage/v/ascii-progress.svg)](http://hackage.haskell.org/package/ascii-progress)
 - - -
 A simple Haskell progress bar for the console. Heavily borrows from TJ
 Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).
 
 ![demo](/demo.gif)
+
+## Installing
+This package is published to hackage as
+[`ascii-progress`](http://hackage.haskell.org/package/ascii-progress), so you
+can install it with:
+
+```
+cabal install ascii-progress
+```
 
 ## Usage
 ```haskell

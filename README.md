@@ -36,6 +36,38 @@ main = do
             loop pg
 ```
 
+## Options
+`ascii-progress` uses an `Options` data type for configuring the progress bar.
+Available options are:
+### `pgFormat :: String`
+A format `String` for the progress bar. The following placeholders are
+supported:
+- `":eta"` (ETA displayed in seconds)
+- `":current"` (current tick)
+- `":total"` (total number of ticks)
+- `":percent"` (percentage completed)
+- `":elapsed"` (elapsed time in seconds)
+- `":bar"` (the actual progress bar)
+
+#### Example
+```haskell
+main = do
+    pg <- newProgressBar def { pgFormat = ":current/:total [:bar]" }
+    -- ...
+```
+
+### `pgCompletedChar :: Char`
+The character used on the completed part of the bar
+
+### `pgPendingChar :: Char`
+The character used on the completed part of the bar
+
+### `pgTotal :: Int`
+The total amount of ticks for the bar to be completed
+
+### `pgWidth :: Int`
+The progress bar's total width in columns
+
 ## License
 This code is licensed under the GPLv2 license for Pedro Tacla Yamada. For more
 information please refer to the [LICENSE](/LICENSE) file.

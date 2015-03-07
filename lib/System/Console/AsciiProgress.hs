@@ -76,7 +76,6 @@ newProgressBar opts = do
             stats <- getInfoStats info
             let progressStr = getProgressStr opts stats
             diff <- (\nl -> nl - cnlines) <$> readMVar nlines
-            nl <- readMVar nlines
             cursorUp diff
             reset
             putStr progressStr

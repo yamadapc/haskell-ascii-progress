@@ -17,7 +17,9 @@ main = withManager $ \manager -> do
     res <- http req manager
     -- Get the Content-Length and initialize the progress bar
     let Just cl = lookup hContentLength (responseHeaders res)
-    pg <- liftIO $ newProgressBar def { pgTotal = read (ByteString.unpack cl) }
+    pg <- liftIO $ newProgressBar def { pgTotal = read (ByteString.unpack cl)
+                                      , pgWidth = 100
+                                      }
     -- Consume the response updating the progress bar
     responseBody res $=+ updateProgress pg $$+- sinkNull
     -- Force the progress bar to complete

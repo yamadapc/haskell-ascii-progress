@@ -19,12 +19,12 @@ main = withManager $ \manager -> do
     let Just cl = lookup hContentLength (responseHeaders res)
     pg <- liftIO $ newProgressBar def { pgTotal = read (ByteString.unpack cl)
                                       , pgWidth = 100
+                                      , pgOnCompletion = putStrLn "Download done"
                                       }
     -- Consume the response updating the progress bar
     responseBody res $=+ updateProgress pg $$+- sinkNull
     -- Force the progress bar to complete
     liftIO $ complete pg
-    liftIO $ putStrLn "Done"
 
 updateProgress :: MonadIO m => ProgressBar -> ConduitM ByteString ByteString m ()
 updateProgress pg = await >>= maybe (return ()) (\chunk -> do

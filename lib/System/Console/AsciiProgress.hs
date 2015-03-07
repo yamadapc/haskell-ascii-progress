@@ -25,7 +25,6 @@ import Data.Default (Default(..))
 import Data.Maybe (isJust)
 import System.Console.ANSI -- (clearLine, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
-import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
 import System.Console.AsciiProgress.Internal
@@ -78,7 +77,6 @@ newProgressBar opts = do
             let progressStr = getProgressStr opts stats
             diff <- (\nl -> nl - cnlines) <$> readMVar nlines
             nl <- readMVar nlines
-            hPutStrLn stderr ("cnlines: " ++ show cnlines ++ " diff: " ++ show diff ++ " nlines: " ++ show nl)
             cursorUp diff
             reset
             putStr progressStr

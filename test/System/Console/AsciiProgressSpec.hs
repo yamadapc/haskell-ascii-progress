@@ -1,7 +1,9 @@
 module System.Console.AsciiProgressSpec where
 
 import System.Console.AsciiProgress
+import System.Console.AsciiProgress.Internal
 import Test.Hspec
+import Test.QuickCheck
 
 mockStats :: Stats
 mockStats = Stats { stTotal = 100
@@ -14,7 +16,7 @@ mockStats = Stats { stTotal = 100
 
 
 spec :: Spec
-spec =
+spec = do
     describe "getProgressStr :: Options -> Int -> String" $ do
         it "fills the completed percentage of the total width" $ do
             let opts = def { pgTotal = 100
@@ -41,3 +43,10 @@ spec =
                            }
             getProgressStr opts mockStats `shouldBe`
                 "**********------------------------------------------------------------------------------------------"
+
+    describe "getBar :: Char -> Char -> Int -> Double -> String" $
+        it "never overflows the defined max width" $
+            forAll (choose (0, 200)) $ \i ->
+                forAll (choose (0, 1)) $ \d ->
+                    length (getBar '*' '-' i d) == i
+

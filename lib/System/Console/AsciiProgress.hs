@@ -5,6 +5,7 @@ module System.Console.AsciiProgress
     , Stats(..)
     , isComplete
     , newProgressBar
+    , complete
     , tick
     , tickN
     , getProgressStrIO
@@ -16,9 +17,8 @@ module System.Console.AsciiProgress
   where
 
 import Control.Applicative ((<$>))
-import Control.Concurrent -- (Chan, MVar, modifyMVar, newChan, newEmptyMVar,
-                           -- newMVar, readChan, readMVar, writeChan, modifyMVar_)
-import Control.Concurrent.Async (Async, async, poll)
+import Control.Concurrent (readChan, readMVar, writeChan, modifyMVar_)
+import Control.Concurrent.Async (Async, async, poll, wait)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
 import System.Console.ANSI (clearLine, setCursorColumn)
@@ -75,6 +75,14 @@ tickN (ProgressBar info _) = writeChan (pgChannel info)
 -- ticks)
 isComplete :: ProgressBar -> IO Bool
 isComplete (ProgressBar _ future) = isJust <$> poll future
+
+-- |
+-- Forces a 'ProgressBar' to finish
+complete :: ProgressBar -> IO ()
+complete pg@(ProgressBar info future) = do
+    let total = pgTotal (pgOptions info)
+    tickN pg total
+    wait future
 
 -- |
 -- Gets the progress bar current @Stats @object

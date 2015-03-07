@@ -29,8 +29,10 @@ data Options = Options { pgFormat :: String
                        -- ^ Total amount of ticks expected
                        , pgWidth :: Int
                        -- ^ The progress bar's width
+                       , pgOnCompletion :: IO ()
+                       -- ^ An IO action to be executed on completion, with the
+                       -- cursor set at progress bar's line
                        }
-  deriving(Eq, Ord, Show)
 
 instance Default Options where
     def = Options { pgFormat = "Working :percent [:bar] :current/:total " ++
@@ -39,6 +41,7 @@ instance Default Options where
                   , pgPendingChar = ' '
                   , pgTotal = 20
                   , pgWidth = 80
+                  , pgOnCompletion = return ()
                   }
 
 -- |
@@ -49,7 +52,6 @@ data ProgressBarInfo = ProgressBarInfo { pgOptions :: Options
                                        , pgCompleted :: MVar Int
                                        , pgFirstTick :: MVar UTCTime
                                        }
-  deriving(Eq)
 
 -- |
 -- Represents a point in time for the progress bar.

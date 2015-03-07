@@ -20,7 +20,6 @@ module System.Console.AsciiProgress
 import Control.Applicative ((<$>))
 import Control.Concurrent -- (readChan, readMVar, writeChan, modifyMVar_)
 import Control.Concurrent.Async (Async, async, poll, wait)
-import Control.Monad
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
 import System.Console.ANSI -- (clearLine, setCursorColumn)
@@ -57,30 +56,34 @@ newProgressBar opts = do
     future <- async $ start info cnlines
     return $ ProgressBar info future
   where
+    resetCursor = clearLine >> setCursorColumn 0
+    unlessDone _ c action | c < pgTotal opts = action
+    unlessDone cnlines _ _ = atProgressLine cnlines (pgOnCompletion opts)
+
+    atProgressLine cnlines action = do
+        diff <- (\nl -> nl - cnlines) <$> readMVar nlines
+        cursorUp diff
+        resetCursor
+        action
+        cursorDown diff
+        resetCursor
+
     start info@ProgressBarInfo{..} cnlines = do
-        c <- readMVar pgCompleted
-        when (c < pgTotal opts) $ do
-            n <- readChan pgChannel
-            handleMessage n
-            when (c + n < pgTotal opts) $
-                start info cnlines
-      where
-        reset = do
-            clearLine
-            setCursorColumn 0
-        handleMessage n = do
-            takeMVar writeLock
-            -- Update the completed tick count
-            modifyMVar_ pgCompleted (\c -> return (c + n))
-            -- Find and update the current and first tick times:
-            stats <- getInfoStats info
-            let progressStr = getProgressStr opts stats
-            diff <- (\nl -> nl - cnlines) <$> readMVar nlines
-            cursorUp diff
-            reset
+       c <- readMVar pgCompleted
+       unlessDone cnlines c $ do
+           n <- readChan pgChannel
+           handleMessage info cnlines n
+           unlessDone cnlines (c + n) $
+               start info cnlines
+
+    handleMessage info cnlines n = modifyMVar_ writeLock $ const $ do
+        -- Update the completed tick count
+        modifyMVar_ (pgCompleted info) (\c -> return (c + n))
+        -- Find and update the current and first tick times:
+        stats <- getInfoStats info
+        let progressStr = getProgressStr opts stats
+        atProgressLine cnlines $
             putStr progressStr
-            cursorDown diff
-            putMVar writeLock ()
 
 -- |
 -- Tick the progress bar

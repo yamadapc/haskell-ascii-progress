@@ -36,6 +36,21 @@ main = do
             loop pg
 ```
 
+## Examples
+The [bin](/bin) directory contains the example above and a more complex example
+which uses `http-conduit` to download an image from imgur, printing the
+progress using the package.
+
+To build the examples, just configure and compile with `-fexamples`:
+```
+git clone https://github.com/yamadapc/haskell-ascii-progress
+cabal install -j --only-dep -fexamples
+cabal configure -fexamples
+cabal run example
+# ...
+cabal run download-example
+```
+
 ## Options
 `ascii-progress` uses an `Options` data type for configuring the progress bar.
 Available options are:

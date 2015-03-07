@@ -77,11 +77,11 @@ getProgressStr :: Options -> Stats -> String
 getProgressStr Options{..} Stats{..} = replace ":bar" barStr statsStr
   where
     statsStr = replaceMany
-        [ (":elapsed", printf "%3.1f" stElapsed)
+        [ (":elapsed", printf "%5.1f" stElapsed)
         , (":current", printf "%3d"   stCompleted)
         , (":total"  , printf "%3d"   stTotal)
         , (":percent", printf "%3d%%" (floor (100 * stPercent) :: Int))
-        , (":eta"    , printf "%3.1f" stEta)
+        , (":eta"    , printf "%5.1f" stEta)
         ]
         pgFormat
     barWidth = pgWidth - length (replace ":bar" "" statsStr)
@@ -110,10 +110,9 @@ getBar :: Char -> Char -> Int -> Double -> String
 getBar completedChar pendingChar width percent =
     replicate bcompleted completedChar ++ replicate bremaining pendingChar
   where
-    percentRemaining = 1 - percent
     fwidth = fromIntegral width
     bcompleted = ceiling $ fwidth * percent
-    bremaining = floor   $ fwidth * percentRemaining
+    bremaining = width - bcompleted
 
 -- |
 -- Gets the amount of seconds elapsed between two @UTCTime@s as a double.

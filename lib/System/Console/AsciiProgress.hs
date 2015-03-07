@@ -11,54 +11,79 @@ module System.Console.AsciiProgress
     , getProgressStrIO
     , getProgressStats
     , getProgressStr
+    , registerLn
     -- Re-exports:
     , Default(..)
     )
   where
 
 import Control.Applicative ((<$>))
-import Control.Concurrent (readChan, readMVar, writeChan, modifyMVar_)
+import Control.Concurrent -- (readChan, readMVar, writeChan, modifyMVar_)
 import Control.Concurrent.Async (Async, async, poll, wait)
+import Control.Monad
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
-import System.Console.ANSI (clearLine, setCursorColumn)
+import System.Console.ANSI -- (clearLine, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
+import System.IO
+import System.IO.Unsafe (unsafePerformIO)
 
 import System.Console.AsciiProgress.Internal
 
-data ProgressBar = ProgressBar ProgressBarInfo (Async ())
+data ProgressBar = ProgressBar { pgInfo :: ProgressBarInfo
+                               , pgFuture :: Async ()
+                               }
+
+nlines :: MVar Int
+nlines = unsafePerformIO (newMVar 0)
+
+writeLock :: MVar ()
+writeLock = unsafePerformIO (newMVar ())
 
 -- |
--- Creates a new progress bar with the given @Options@
+-- Registers a new line for multiple progress bars
+registerLn :: IO ()
+registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
+
+-- |
+-- Creates a new progress bar with the given @Options@. Multiple progress bars
+-- may be created as long as everytime a line is outputted by your program,
+-- while progress bars run is followed by a call to `registerLn`
 newProgressBar :: Options -> IO ProgressBar
 newProgressBar opts = do
     hSetBuffering stdout NoBuffering
     info <- newProgressBarInfo opts
-    future <- async $ start info
+    cnlines <- modifyMVar nlines $ \nl -> return (nl + 1, nl)
+    putStrLn ""
+    future <- async $ start info cnlines
     return $ ProgressBar info future
   where
-    start info@ProgressBarInfo{..} = do
+    start info@ProgressBarInfo{..} cnlines = do
         c <- readMVar pgCompleted
-        if c < pgTotal opts
-            then do
-                n <- readChan pgChannel
-                handleMessage n
-                if c + n < pgTotal opts
-                    then start info
-                    else reset
-            else reset
+        when (c < pgTotal opts) $ do
+            n <- readChan pgChannel
+            handleMessage n
+            when (c + n < pgTotal opts) $
+                start info cnlines
       where
         reset = do
             clearLine
             setCursorColumn 0
         handleMessage n = do
+            takeMVar writeLock
             -- Update the completed tick count
             modifyMVar_ pgCompleted (\c -> return (c + n))
             -- Find and update the current and first tick times:
             stats <- getInfoStats info
-            reset
             let progressStr = getProgressStr opts stats
+            diff <- (\nl -> nl - cnlines) <$> readMVar nlines
+            nl <- readMVar nlines
+            hPutStrLn stderr ("cnlines: " ++ show cnlines ++ " diff: " ++ show diff ++ " nlines: " ++ show nl)
+            cursorUp diff
+            reset
             putStr progressStr
+            cursorDown diff
+            putMVar writeLock ()
 
 -- |
 -- Tick the progress bar

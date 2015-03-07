@@ -69,6 +69,21 @@ executable download-example
    buildable: False
   default-language:    Haskell2010
 
+executable multi-example
+  main-is:             MultiExample.hs
+  build-depends:       ansi-terminal
+                     , async >= 2.0.1.5
+                     , base >=4.7 && <4.8
+                     , data-default >= 0.5.3
+                     , time >= 1.4.2
+  hs-source-dirs:      lib
+                     , bin
+  if flag(examples)
+   buildable: True
+  else
+   buildable: False
+  default-language:    Haskell2010
+
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs

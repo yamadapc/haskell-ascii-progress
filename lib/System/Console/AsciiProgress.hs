@@ -52,7 +52,8 @@ newProgressBar opts = do
     hSetBuffering stdout NoBuffering
     info <- newProgressBarInfo opts
     cnlines <- modifyMVar nlines $ \nl -> return (nl + 1, nl)
-    putStrLn ""
+    atProgressLine cnlines $
+        getProgressStr opts <$> getInfoStats info >>= putStrLn
     future <- async $ start info cnlines
     return $ ProgressBar info future
   where

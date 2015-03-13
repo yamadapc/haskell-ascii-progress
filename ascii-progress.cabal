@@ -27,7 +27,7 @@ library
                      , System.Console.AsciiProgress.Internal
   build-depends:       ansi-terminal
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , data-default >= 0.5.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
@@ -37,7 +37,7 @@ executable example
   main-is:             Example.hs
   build-depends:       ansi-terminal
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , data-default >= 0.5.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
@@ -53,7 +53,7 @@ executable download-example
   build-depends:       HTTP
                      , ansi-terminal
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , data-default >= 0.5.3
                      , time >= 1.4.2
@@ -73,7 +73,7 @@ executable multi-example
   main-is:             MultiExample.hs
   build-depends:       ansi-terminal
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , data-default >= 0.5.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
@@ -89,7 +89,7 @@ test-suite hspec
   main-is: Spec.hs
   build-depends:       ansi-terminal
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , data-default >= 0.5.3
                      , hspec >=2.1 && <3
                      , time >= 1.4.2

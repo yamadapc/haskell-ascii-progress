@@ -1,12 +1,15 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE MagicHash, UnboxedTuples #-}
 module System.Console.AsciiProgress.Internal
   where
 
-import Control.Concurrent (Chan, MVar, newChan, newEmptyMVar, newMVar,
-                           readMVar, tryPutMVar, tryReadMVar)
+import Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
+                           readMVar, tryPutMVar)
 import Data.Default (Default(..))
 import Data.Time.Clock
+import GHC.Base (IO(..), tryReadMVar#)
+import GHC.MVar (MVar(..))
 import Text.Printf
 
 -- |
@@ -184,3 +187,15 @@ forceReadMVar mv v = tryReadMVar mv >>= \case
            then return v
            else readMVar mv
     Just o -> return o
+
+-- Monkey patch base < 4.7
+-- |A non-blocking version of 'readMVar'.  The 'tryReadMVar' function
+-- returns immediately, with 'Nothing' if the 'MVar' was empty, or
+-- @'Just' a@ if the 'MVar' was full with contents @a@.
+--
+-- /Since: 4.7.0.0/
+tryReadMVar :: MVar a -> IO (Maybe a)
+tryReadMVar (MVar m) = IO $ \s ->
+    case tryReadMVar# m s of
+        (# s', 0#, _ #) -> (# s', Nothing #)      -- MVar is empty
+        (# s', _,  a #) -> (# s', Just a  #)      -- MVar is full

@@ -18,11 +18,12 @@ module System.Console.AsciiProgress
   where
 
 import Control.Applicative ((<$>))
-import Control.Concurrent -- (readChan, readMVar, writeChan, modifyMVar_)
+import Control.Concurrent (MVar, modifyMVar, modifyMVar_, newMVar, readChan,
+                           readMVar, writeChan)
 import Control.Concurrent.Async (Async, async, poll, wait)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
-import System.Console.ANSI -- (clearLine, setCursorColumn)
+import System.Console.ANSI (clearLine, cursorDown, cursorUp, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 

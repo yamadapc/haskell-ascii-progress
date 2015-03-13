@@ -1,6 +1,7 @@
 ascii-progress
 ==============
 [![hackage version](https://img.shields.io/hackage/v/ascii-progress.svg)](http://hackage.haskell.org/package/ascii-progress)
+[![Build Status](https://travis-ci.org/yamadapc/haskell-ascii-progress.svg?branch=master)](https://travis-ci.org/yamadapc/haskell-ascii-progress)
 - - -
 A simple Haskell progress bar for the console. Heavily borrows from TJ
 Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).

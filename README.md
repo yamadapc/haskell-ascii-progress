@@ -95,5 +95,5 @@ An IO action to be executed on completion, with the cursor set at progress
 bar's line
 
 ## License
-This code is licensed under the GPLv2 license for Pedro Tacla Yamada. For more
+This code is licensed under the MIT license for Pedro Tacla Yamada. For more
 information please refer to the [LICENSE](/LICENSE) file.

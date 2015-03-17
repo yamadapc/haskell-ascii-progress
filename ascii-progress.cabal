@@ -9,7 +9,7 @@ description:
     <https://github.com/yamadapc/haskell-ascii-progress github>
 
 homepage:            https://github.com/yamadapc/haskell-ascii-progress
-license:             GPL-2
+license:             MIT
 license-file:        LICENSE
 author:              Pedro Tacla Yamada
 maintainer:          tacla.yamada@gmail.com

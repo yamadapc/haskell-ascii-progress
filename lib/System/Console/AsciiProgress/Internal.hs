@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE MagicHash, UnboxedTuples #-}
 module System.Console.AsciiProgress.Internal
@@ -180,7 +179,7 @@ replace old new target@(t:ts) =
 -- assumed that once the MVar becomes full, it won't ever be left emptied. This
 -- code may deadlock if that's the case.
 forceReadMVar :: MVar a -> a -> IO a
-forceReadMVar mv v = tryReadMVar mv >>= \case
+forceReadMVar mv v = tryReadMVar mv >>= \m -> case m of
     Nothing -> do
         success <- tryPutMVar mv v
         if success

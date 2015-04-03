@@ -12,6 +12,13 @@ module System.Console.AsciiProgress
     , getProgressStats
     , getProgressStr
     , registerLn
+    -- Formatters
+    , eta
+    , elapsed
+    , total
+    , percent
+    , current
+    , bar
     -- Re-exports:
     , Default(..)
     )

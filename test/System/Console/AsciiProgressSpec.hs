@@ -1,5 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 module System.Console.AsciiProgressSpec where
 
+import Formatting
 import System.Console.AsciiProgress
 import System.Console.AsciiProgress.Internal
 import Test.Hspec
@@ -21,7 +23,7 @@ spec = do
         it "fills the completed percentage of the total width" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
-                           , pgFormat = ":bar"
+                           , pgFormat = bar
                            }
             getProgressStr opts mockStats `shouldBe`
                 "==========                                                                                          "
@@ -29,7 +31,7 @@ spec = do
         it "replaces `:bar` in the `pgFormat` format `String`" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
-                           , pgFormat = "working [:bar]"
+                           , pgFormat = "working [" % bar % "]"
                            }
             getProgressStr opts mockStats `shouldBe`
                 "working [=========                                                                                 ]"
@@ -39,7 +41,7 @@ spec = do
                            , pgWidth = 100
                            , pgCompletedChar = '*'
                            , pgPendingChar = '-'
-                           , pgFormat = ":bar"
+                           , pgFormat = bar
                            }
             getProgressStr opts mockStats `shouldBe`
                 "**********------------------------------------------------------------------------------------------"

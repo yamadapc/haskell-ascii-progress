@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MagicHash, UnboxedTuples #-}
 module System.Console.AsciiProgress.Internal
   where
@@ -6,14 +7,18 @@ module System.Console.AsciiProgress.Internal
 import Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
                            readMVar, tryPutMVar)
 import Data.Default (Default(..))
+import Data.Monoid ((<>))
 import Data.Time.Clock
+import Data.Text (Text, unpack)
+import Data.Text.Buildable (build)
+import Formatting hiding (build)
 import GHC.Base (IO(..), tryReadMVar#)
 import GHC.MVar (MVar(..))
 import Text.Printf
 
 -- |
 -- The progress bar's options.
-data Options = Options { pgFormat :: String
+data Options = Options { pgFormat :: Format Text (Stats -> Text)
                        -- ^ A format string for the progress bar. Currently the
                        -- following format strings are supported:
                        -- - ":eta" (ETA displayed in seconds)
@@ -37,8 +42,9 @@ data Options = Options { pgFormat :: String
                        }
 
 instance Default Options where
-    def = Options { pgFormat = "Working :percent [:bar] :current/:total " ++
-                               "(for :elapsed, :eta remaining)"
+    def = Options { pgFormat = "Working " % percent <> " [" % bar % "] " <>
+                               current % "/" <> total %
+                               " (for " <> elapsed % ", " <> eta % " remaining)"
                   , pgCompletedChar = '='
                   , pgPendingChar = ' '
                   , pgTotal = 20
@@ -78,16 +84,9 @@ newProgressBarInfo opts = do
 -- Gets the string to be printed given the options object and a certain stats
 -- object representing the rendering moment.
 getProgressStr :: Options -> Stats -> String
-getProgressStr Options{..} Stats{..} = replace ":bar" barStr statsStr
+getProgressStr Options{..} st@Stats{..} = replace ":bar" barStr statsStr
   where
-    statsStr = replaceMany
-        [ (":elapsed", printf "%5.1f" stElapsed)
-        , (":current", printf "%3d"   stCompleted)
-        , (":total"  , printf "%3d"   stTotal)
-        , (":percent", printf "%3d%%" (floor (100 * stPercent) :: Int))
-        , (":eta"    , printf "%5.1f" stEta)
-        ]
-        pgFormat
+    statsStr = unpack (sformat pgFormat st)
     barWidth = pgWidth - fromIntegral (length (replace ":bar" "" statsStr))
     barStr   = getBar pgCompletedChar pgPendingChar barWidth stPercent
 
@@ -100,22 +99,22 @@ getInfoStats info = do
     completed   <- readMVar (pgCompleted info)
     currentTime <- getCurrentTime
     initTime    <- forceReadMVar (pgFirstTick info) currentTime
-    let total     = pgTotal (pgOptions info)
-        remaining = total - completed
-        elapsed   = getElapsed initTime currentTime
-        percent   = fromIntegral completed / fromIntegral total
-        eta       = getEta completed remaining elapsed
-    return $ Stats total completed remaining elapsed percent eta
+    let to = pgTotal (pgOptions info)
+        re = to - completed
+        el = getElapsed initTime currentTime
+        pe = fromIntegral completed / fromIntegral to
+        et = getEta completed re el
+    return $ Stats to completed re el pe et
 
 -- |
 -- Generates the actual progress bar string, with its completed/pending
 -- characters, width and a completeness percentage.
 getBar :: Char -> Char -> Integer -> Double -> String
-getBar completedChar pendingChar width percent =
+getBar completedChar pendingChar width per =
     replicate (fromInteger bcompleted) completedChar ++ replicate (fromInteger bremaining) pendingChar
   where
     fwidth = fromIntegral width
-    bcompleted = ceiling $ fwidth * percent
+    bcompleted = ceiling $ fwidth * per
     bremaining = width - bcompleted
 
 -- |
@@ -132,9 +131,34 @@ getElapsed initTime currentTime = realToFrac (diffUTCTime currentTime initTime)
 -- >>> getEta 30 70 23.3
 -- 54.366666666666674
 getEta :: Integer -> Integer -> Double -> Double
-getEta completed remaining elapsed = averageSecsPerTick * fromIntegral remaining
+getEta completed remaining ela = averageSecsPerTick * fromIntegral remaining
   where
-    averageSecsPerTick = elapsed / fromIntegral completed
+    averageSecsPerTick = ela / fromIntegral completed
+
+laterBuild :: Buildable b => (a -> b) -> Format r (a -> r)
+laterBuild f = later (build . f)
+
+slaterBuild :: Buildable b => (a -> c) -> (c -> b) -> Format r (a -> r)
+slaterBuild p f = laterBuild (f . p)
+
+eta :: Format r (Stats -> r)
+eta = slaterBuild stEta (printf "%5.1f" :: Double -> String)
+
+elapsed :: Format r (Stats -> r)
+elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
+
+total :: Format r (Stats -> r)
+total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
+
+percent :: Format r (Stats -> r)
+percent = slaterBuild stPercent $
+              (printf "%3d%%" :: Int -> String) . floor . (100 *)
+
+current :: Format r (Stats -> r)
+current = slaterBuild stCompleted (printf "%3d" :: Integer -> String)
+
+bar :: Format Text (Stats -> Text)
+bar = laterBuild $ const (":bar" :: Text)
 
 -- |
 -- Replaces each pair in a list of replacement pairs in a list with replace.

@@ -32,6 +32,9 @@ library
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
+                     , formatting >= 6
+                     , text >= 1.1
+                     , text-format >= 0.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
   default-language:    Haskell2010
@@ -58,11 +61,11 @@ executable download-example
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , bytestring
-                     , data-default >= 0.5.3
-                     , time >= 1.4.2
                      , conduit >= 1.2
+                     , data-default >= 0.5.3
                      , http-conduit >= 2.1
                      , http-types >= 0.8
+                     , time >= 1.4.2
                      , transformers >= 0.3
   hs-source-dirs:      lib
                      , bin
@@ -90,13 +93,16 @@ executable multi-example
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
-  build-depends:       ansi-terminal
+  build-depends:       QuickCheck >= 2.6
+                     , ansi-terminal
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
+                     , formatting >= 6
                      , hspec >=2.1 && <3
+                     , text >= 1.1
+                     , text-format >= 0.3
                      , time >= 1.4.2
-                     , QuickCheck >= 2.6
   hs-source-dirs:      lib
                      , test
   default-language:    Haskell2010

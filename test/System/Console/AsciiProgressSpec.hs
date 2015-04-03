@@ -17,7 +17,7 @@ mockStats = Stats { stTotal = 100
 
 spec :: Spec
 spec = do
-    describe "getProgressStr :: Options -> Int -> String" $ do
+    describe "getProgressStr :: Options -> Integer -> String" $ do
         it "fills the completed percentage of the total width" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
@@ -44,9 +44,9 @@ spec = do
             getProgressStr opts mockStats `shouldBe`
                 "**********------------------------------------------------------------------------------------------"
 
-    describe "getBar :: Char -> Char -> Int -> Double -> String" $
+    describe "getBar :: Char -> Char -> Integer -> Double -> String" $
         it "never overflows the defined max width" $
             forAll (choose (0, 200)) $ \i ->
                 forAll (choose (0, 1)) $ \d ->
-                    length (getBar '*' '-' i d) == i
+                    length (getBar '*' '-' i d) == fromInteger i
 

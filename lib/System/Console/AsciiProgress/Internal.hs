@@ -27,9 +27,9 @@ data Options = Options { pgFormat :: String
                        -- bar
                        , pgPendingChar :: Char
                        -- ^ Character to be used on the pending part of the bar
-                       , pgTotal :: Int
+                       , pgTotal :: Integer
                        -- ^ Total amount of ticks expected
-                       , pgWidth :: Int
+                       , pgWidth :: Integer
                        -- ^ The progress bar's width
                        , pgOnCompletion :: IO ()
                        -- ^ An IO action to be executed on completion, with the
@@ -50,16 +50,16 @@ instance Default Options where
 -- The progress bar's state object. Contains all but the printing thread's
 -- @Async@ object.
 data ProgressBarInfo = ProgressBarInfo { pgOptions :: Options
-                                       , pgChannel :: Chan Int
-                                       , pgCompleted :: MVar Int
+                                       , pgChannel :: Chan Integer
+                                       , pgCompleted :: MVar Integer
                                        , pgFirstTick :: MVar UTCTime
                                        }
 
 -- |
 -- Represents a point in time for the progress bar.
-data Stats = Stats { stTotal :: Int
-                   , stCompleted :: Int
-                   , stRemaining :: Int
+data Stats = Stats { stTotal :: Integer
+                   , stCompleted :: Integer
+                   , stRemaining :: Integer
                    , stElapsed :: Double
                    , stPercent :: Double
                    , stEta :: Double
@@ -88,7 +88,7 @@ getProgressStr Options{..} Stats{..} = replace ":bar" barStr statsStr
         , (":eta"    , printf "%5.1f" stEta)
         ]
         pgFormat
-    barWidth = pgWidth - length (replace ":bar" "" statsStr)
+    barWidth = pgWidth - fromIntegral (length (replace ":bar" "" statsStr))
     barStr   = getBar pgCompletedChar pgPendingChar barWidth stPercent
 
 -- |
@@ -110,9 +110,9 @@ getInfoStats info = do
 -- |
 -- Generates the actual progress bar string, with its completed/pending
 -- characters, width and a completeness percentage.
-getBar :: Char -> Char -> Int -> Double -> String
+getBar :: Char -> Char -> Integer -> Double -> String
 getBar completedChar pendingChar width percent =
-    replicate bcompleted completedChar ++ replicate bremaining pendingChar
+    replicate (fromInteger bcompleted) completedChar ++ replicate (fromInteger bremaining) pendingChar
   where
     fwidth = fromIntegral width
     bcompleted = ceiling $ fwidth * percent
@@ -131,7 +131,7 @@ getElapsed initTime currentTime = realToFrac (diffUTCTime currentTime initTime)
 -- 10.0
 -- >>> getEta 30 70 23.3
 -- 54.366666666666674
-getEta :: Int -> Int -> Double -> Double
+getEta :: Integer -> Integer -> Double -> Double
 getEta completed remaining elapsed = averageSecsPerTick * fromIntegral remaining
   where
     averageSecsPerTick = elapsed / fromIntegral completed

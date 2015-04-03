@@ -90,12 +90,12 @@ newProgressBar opts = do
 -- |
 -- Tick the progress bar
 tick :: ProgressBar -> IO ()
-tick pg = tickN pg 1
+tick pg = tickN pg (1 :: Integer)
 
 -- |
 -- Tick the progress bar N times
-tickN :: ProgressBar -> Int -> IO ()
-tickN (ProgressBar info _) = writeChan (pgChannel info)
+tickN :: Integral a => ProgressBar -> a -> IO ()
+tickN (ProgressBar info _) = writeChan (pgChannel info) . fromIntegral
 
 -- |
 -- Returns if the progress bar rendering thread has exited (it has done enough

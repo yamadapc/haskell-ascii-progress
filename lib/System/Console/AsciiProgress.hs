@@ -80,6 +80,15 @@
 -- render. It then exposes several formatters which just introspect into the
 -- type. You may both define your own formatters, by looking at the type, and
 -- manually get the 'Stats' object with 'getProgressStats'.
+--
+-- == Defining more formatters
+-- The 'System.Console.AsciiProgress.Formatting' module exports formatters for
+-- showing the current and total tick amounts as filesizes. It's very easy to
+-- define these kinds of formatters using this module.
+--
+-- Please take a look at
+-- <https://github.com/yamadapc/haskell-ascii-progress/blob/master/lib/System/Console/AsciiProgress/Formatting.hs the source code>
+-- for examples for better information.
 module System.Console.AsciiProgress
     (
     -- * Basic functions and types
@@ -97,17 +106,22 @@ module System.Console.AsciiProgress
     , Options(..)
     -- ** Formatters
     , ProgressFormat
+    -- *** Base formatters
     , eta
     , elapsed
     , total
     , percent
     , current
     , bar
-    , registerLn
+    -- *** Extra Formatters
+    , currentFilesize
+    , totalFilesize
     -- ** Manually getting the progress bar string representation
     , getProgressTxt
     , getProgressTxtIO
-    -- ** Re-exports for convenience
+    -- * Helpers for concurrent progress bars
+    , registerLn
+    -- * Re-exports for convenience
     , Default(..)
     , (%)
     , (%.)
@@ -129,6 +143,7 @@ import System.Console.ANSI (clearLine, cursorDown, cursorUp, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 
+import System.Console.AsciiProgress.Formatting
 import System.Console.AsciiProgress.Internal
 
 data ProgressBar = ProgressBar { pgInfo :: ProgressBarInfo

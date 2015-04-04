@@ -27,6 +27,7 @@ flag examples
 
 library
   exposed-modules:     System.Console.AsciiProgress
+                     , System.Console.AsciiProgress.Formatting
                      , System.Console.AsciiProgress.Internal
   build-depends:       ansi-terminal
                      , async >= 2.0.1.5

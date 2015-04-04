@@ -101,7 +101,7 @@ data ProgressBarInfo = ProgressBarInfo { pgOptions :: Options
 -- |
 -- Represents a point in time for the progress bar.
 data Stats = Stats { stTotal :: Integer
-                   , stCompleted :: Integer
+                   , stCurrent :: Integer
                    , stRemaining :: Integer
                    , stElapsed :: Double
                    , stPercent :: Double
@@ -203,6 +203,11 @@ elapsed :: ProgressFormat
 elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
 
 -- |
+-- The current tick
+current :: ProgressFormat
+current = slaterBuild stCurrent (printf "%3d" :: Integer -> String)
+
+-- |
 -- The total number of ticks
 total :: ProgressFormat
 total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
@@ -212,11 +217,6 @@ total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
 percent :: ProgressFormat
 percent = slaterBuild stPercent $
               (printf "%3d%%" :: Int -> String) . floor . (100 *)
--- |
--- The current tick
-current :: ProgressFormat
-current = slaterBuild stCompleted (printf "%3d" :: Integer -> String)
-
 -- |
 -- The actual progress bar
 bar :: ProgressFormat

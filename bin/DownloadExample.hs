@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.ByteString as ByteString (length)
 import Data.ByteString (ByteString)
@@ -7,8 +8,8 @@ import Data.Conduit.List (sinkNull)
 import Network.HTTP.Conduit (http, parseUrl, responseBody, responseHeaders,
                              withManager)
 import Network.HTTP.Types (hContentLength)
-import System.Console.AsciiProgress (ProgressBar, Options(..), complete, def,
-                                     newProgressBar, tickN)
+
+import System.Console.AsciiProgress
 
 main :: IO ()
 main = withManager $ \manager -> do
@@ -20,6 +21,10 @@ main = withManager $ \manager -> do
     pg <- liftIO $ newProgressBar def { pgTotal = read (ByteString.unpack cl)
                                       , pgWidth = 100
                                       , pgOnCompletion = putStrLn "Download done"
+                                      , pgFormat = Left $
+                                          "Downloading " % percent <>
+                                          " [" % bar % "] " <> currentFilesize %
+                                          "/" <> totalFilesize
                                       }
     -- Consume the response updating the progress bar
     responseBody res $=+ updateProgress pg $$+- sinkNull

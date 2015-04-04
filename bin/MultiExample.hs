@@ -7,16 +7,19 @@ import System.Console.AsciiProgress (ProgressBar(..), Options(..), isComplete,
 main :: IO ()
 main = do
     pg1 <- newProgressBar def { pgWidth = 100
+                              , pgTotal = 30
                               , pgOnCompletion = putStr "pg 1 is Done!"
                               }
     _ <- forkIO $ loop pg1 (100 * 1000)
 
     pg2 <- newProgressBar def { pgWidth = 100
+                              , pgTotal = 100
                               , pgOnCompletion = putStr "pg 2 is Done!"
                               }
     _ <- forkIO $ loop pg2 (400 * 1000)
 
     pg3 <- newProgressBar def { pgWidth = 100
+                              , pgTotal = 50
                               , pgOnCompletion = putStr "pg 3 is Done!"
                               }
     _ <- forkIO $ loop pg3 (200 * 1000)

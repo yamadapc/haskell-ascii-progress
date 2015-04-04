@@ -45,6 +45,9 @@ executable example
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
+                     , formatting >= 6
+                     , text >= 1.1
+                     , text-format >= 0.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
                      , bin
@@ -65,6 +68,9 @@ executable download-example
                      , data-default >= 0.5.3
                      , http-conduit >= 2.1
                      , http-types >= 0.8
+                     , formatting >= 6
+                     , text >= 1.1
+                     , text-format >= 0.3
                      , time >= 1.4.2
                      , transformers >= 0.3
   hs-source-dirs:      lib
@@ -81,6 +87,9 @@ executable multi-example
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
+                     , formatting >= 6
+                     , text >= 1.1
+                     , text-format >= 0.3
                      , time >= 1.4.2
   hs-source-dirs:      lib
                      , bin

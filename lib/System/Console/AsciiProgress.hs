@@ -13,7 +13,8 @@
 -- <https://github.com/tj/node-progress progress>.
 -- See the
 -- <https://github.com/yamadapc/haskell-ascii-progress README on our GitHub page>
--- for visual demos to see how progress bars look.
+-- for visual demos to see how progress bars look. There are also several examples
+-- there.
 --
 -- = Getting started (in 5 minutes or less)
 -- There are only two basic ideas here. The 'ProgressBar' object and ticking it

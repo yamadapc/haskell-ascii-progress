@@ -132,7 +132,9 @@ module System.Console.AsciiProgress
 import Control.Applicative ((<$>))
 import Control.Concurrent (MVar, modifyMVar, modifyMVar_, newMVar, readChan,
                            readMVar, withMVarMasked, writeChan)
+import Control.Concurrent.STM (atomically, modifyTVar, readTVarIO)
 import Control.Concurrent.Async (Async, async, poll, wait)
+import Control.Monad (void)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
 import Data.Monoid ((<>))
@@ -176,7 +178,7 @@ newProgressBar opts = withWriteLock $ do
         resetCursor
 
     start info@ProgressBarInfo{..} cnlines = do
-       c <- readMVar pgCompleted
+       c <- readTVarIO pgCompleted
        unlessDone cnlines c $ do
            n <- readChan pgChannel
            handleMessage info cnlines n
@@ -185,7 +187,7 @@ newProgressBar opts = withWriteLock $ do
 
     handleMessage info cnlines n = do
         -- Update the completed tick count
-        modifyMVar_ (pgCompleted info) (\c -> return (c + n))
+        void $ atomically $ modifyTVar (pgCompleted info) (+ n)
         -- Find and update the current and first tick times:
         stats <- getInfoStats info
         let progressTxt = getProgressTxt opts stats

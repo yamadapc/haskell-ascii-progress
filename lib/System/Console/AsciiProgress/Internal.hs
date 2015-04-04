@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MagicHash, UnboxedTuples #-}
 -- |
 -- Module: System.Console.AsciiProgress.Internal
 -- Copyright: (c) 2015 Pedro Tacla Yamada
@@ -12,8 +11,10 @@
 module System.Console.AsciiProgress.Internal
   where
 
-import Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
-                           readMVar, tryPutMVar)
+import Control.Concurrent (Chan, newChan)
+import Control.Concurrent.STM (STM, TMVar, TVar, atomically, newEmptyTMVarIO,
+                               newTVarIO, readTVarIO, readTMVar, tryPutTMVar,
+                               tryReadTMVar)
 import Data.Default (Default(..))
 import Data.Monoid ((<>))
 import Data.Time.Clock (UTCTime, diffUTCTime, getCurrentTime)
@@ -21,8 +22,6 @@ import Data.Text (Text, pack, replace)
 import qualified Data.Text as T (length)
 import Data.Text.Buildable (build)
 import Formatting hiding (build)
-import GHC.Base (IO(..), tryReadMVar#)
-import GHC.MVar (MVar(..))
 import Text.Printf
 
 -- |
@@ -94,8 +93,8 @@ instance Default Options where
 -- @Async@ object.
 data ProgressBarInfo = ProgressBarInfo { pgOptions :: Options
                                        , pgChannel :: Chan Integer
-                                       , pgCompleted :: MVar Integer
-                                       , pgFirstTick :: MVar UTCTime
+                                       , pgCompleted :: TVar Integer
+                                       , pgFirstTick :: TMVar UTCTime
                                        }
 
 -- |
@@ -113,8 +112,8 @@ data Stats = Stats { stTotal :: Integer
 newProgressBarInfo :: Options -> IO ProgressBarInfo
 newProgressBarInfo opts = do
     chan <- newChan
-    mcompleted <- newMVar 0
-    mfirstTick <- newEmptyMVar
+    mcompleted <- newTVarIO 0
+    mfirstTick <- newEmptyTMVarIO
     return $ ProgressBarInfo opts chan mcompleted mfirstTick
 
 -- |
@@ -146,9 +145,9 @@ getStatsTxt (Left fmt) st = sformat fmt st
 -- by different progress renderers.
 getInfoStats :: ProgressBarInfo -> IO Stats
 getInfoStats info = do
-    completed   <- readMVar (pgCompleted info)
+    completed   <- readTVarIO (pgCompleted info)
     currentTime <- getCurrentTime
-    initTime    <- forceReadMVar (pgFirstTick info) currentTime
+    initTime    <- atomically $ forceReadTMVar (pgFirstTick info) currentTime
     let to = pgTotal (pgOptions info)
         re = to - completed
         el = getElapsed initTime currentTime
@@ -244,28 +243,16 @@ replaceMany :: [(Text, Text)] -> Text -> Text
 replaceMany pairs target = foldr (uncurry replace) target pairs
 
 -- |
--- Forces an MVar's contents to be read or swaped by a default value, even if
--- it's currently empty. Will discard the default value write to the MVar if it
+-- Forces an TVar's contents to be read or swaped by a default value, even if
+-- it's currently empty. Will discard the default value write to the TVar if it
 -- becomes full in the middle of the operation and return its value. It's
--- assumed that once the MVar becomes full, it won't ever be left emptied. This
+-- assumed that once the TVar becomes full, it won't ever be left emptied. This
 -- code may deadlock if that's the case.
-forceReadMVar :: MVar a -> a -> IO a
-forceReadMVar mv v = tryReadMVar mv >>= \m -> case m of
+forceReadTMVar :: TMVar a -> a -> STM a
+forceReadTMVar mv v = tryReadTMVar mv >>= \m -> case m of
     Nothing -> do
-        success <- tryPutMVar mv v
+        success <- tryPutTMVar mv v
         if success
            then return v
-           else readMVar mv
+           else readTMVar mv
     Just o -> return o
-
--- Monkey patch base < 4.7
--- |A non-blocking version of 'readMVar'.  The 'tryReadMVar' function
--- returns immediately, with 'Nothing' if the 'MVar' was empty, or
--- @'Just' a@ if the 'MVar' was full with contents @a@.
---
--- /Since: 4.7.0.0/
-tryReadMVar :: MVar a -> IO (Maybe a)
-tryReadMVar (MVar m) = IO $ \s ->
-    case tryReadMVar# m s of
-        (# s', 0#, _ #) -> (# s', Nothing #)      -- MVar is empty
-        (# s', _,  a #) -> (# s', Just a  #)      -- MVar is full

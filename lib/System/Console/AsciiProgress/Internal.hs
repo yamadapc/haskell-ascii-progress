@@ -2,6 +2,13 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MagicHash, UnboxedTuples #-}
+-- |
+-- Module: System.Console.AsciiProgress.Internal
+-- Copyright: (c) 2015 Pedro Tacla Yamada
+-- License: MIT
+-- Maintainer: tacla.yamada@gmail.com
+-- Stability: experimental
+-- Portability: portable
 module System.Console.AsciiProgress.Internal
   where
 
@@ -18,13 +25,17 @@ import GHC.Base (IO(..), tryReadMVar#)
 import GHC.MVar (MVar(..))
 import Text.Printf
 
-type ProgressFormat = Format Text (Stats -> Text)
-
 -- |
 -- The progress bar's options.
 data Options = Options { pgFormat :: Either ProgressFormat Text
                        -- ^ Either a 'Format' or a 'Text' representation of
-                       -- the format for the progress bar. Currently the
+                       -- the format for the progress bar. Please refer to the
+                       -- <https://hackage.haskell.org/package/formatting formatting package's haddock>
+                       -- or
+                       -- <http://chrisdone.com/posts/formatting this excellent blog post by the author>
+                       -- for more information on the 'Format' type.
+                       --
+                       -- Currently the
                        -- following formatters are supported:
                        --
                        --     - 'eta' (ETA displayed in seconds)
@@ -177,33 +188,38 @@ getEta completed remaining ela = averageSecsPerTick * fromIntegral remaining
     averageSecsPerTick = ela / fromIntegral completed
 
 -- |
+-- The specific formatting type used in @ascii-progress@. It conveys that all
+-- our formatters take a 'Stats' object and return a 'Text'.
+type ProgressFormat = Format Text (Stats -> Text)
+
+-- |
 -- ETA displayed in seconds
-eta :: Format r (Stats -> r)
+eta :: ProgressFormat
 eta = slaterBuild stEta (printf "%5.1f" :: Double -> String)
 
 -- |
 -- The elapsed time in seconds
-elapsed :: Format r (Stats -> r)
+elapsed :: ProgressFormat
 elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
 
 -- |
 -- The total number of ticks
-total :: Format r (Stats -> r)
+total :: ProgressFormat
 total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
 
 -- |
 -- The percentage that is completed
-percent :: Format r (Stats -> r)
+percent :: ProgressFormat
 percent = slaterBuild stPercent $
               (printf "%3d%%" :: Int -> String) . floor . (100 *)
 -- |
 -- The current tick
-current :: Format r (Stats -> r)
+current :: ProgressFormat
 current = slaterBuild stCompleted (printf "%3d" :: Integer -> String)
 
 -- |
 -- The actual progress bar
-bar :: Format Text (Stats -> Text)
+bar :: ProgressFormat
 bar = laterBuild $ const (":bar" :: Text)
 
 laterBuild :: Buildable b => (a -> b) -> Format r (a -> r)

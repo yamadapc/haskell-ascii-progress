@@ -1,18 +1,100 @@
 {-# LANGUAGE RecordWildCards #-}
+-- |
+-- Module: System.Console.AsciiProgress
+-- Description: A simple progress bar for the console.
+-- Copyright: (c) 2015 Pedro Tacla Yamada
+-- License: MIT
+-- Maintainer: tacla.yamada@gmail.com
+-- Stability: experimental
+-- Portability: portable
+--
+-- A simple Haskell progress bar for the console. It heavily borrows from TJ
+-- Holowaychuk's Node.JS project
+-- <https://github.com/tj/node-progress progress>.
+-- See the
+-- <https://github.com/yamadapc/haskell-ascii-progress README on our GitHub page>
+-- for visual demos to see how progress bars look.
+--
+-- = Getting started (in 5 minutes or less)
+-- There are only two basic ideas here. The 'ProgressBar' object and ticking it
+-- using the 'tick' or 'tickN' functions. First, we create a 'ProgressBar' with
+-- 'newProgressBar', setting how many ticks its going to have before being
+-- completed and then we tick it away wherever we want.
+--
+-- == Creating new progress bars
+-- The 'newProgressBar' function takes an 'Options' object, but an instance to
+-- the 'Default' class from
+-- <https://hackage.haskell.org/package/data-default data-default>
+-- is implemented, so usage is kept simple.
+--
+-- This is how to create a 'ProgressBar' with 50 ticks:
+--
+-- @
+-- pg <- newProgressBar def { pgTotal = 50 }
+-- @
+--
+-- Multiple progress bars may be created and updated concurrently, so Docker
+-- style progress interfaces are both possible and easy to implement.
+--
+-- == Updating your progress bar
+--
+-- @
+-- tick pg -- Ticks the progress bar once
+-- tickN pg 10 -- Ticks the progress bar 10 times:
+-- @
+--
+-- = Customizing how it looks
+-- For the most part, the documentation on 'Options' should be more than enough
+-- to understand how to customize @ascii-progress@. There are fields for
+-- setting:
+--
+--     - the total number of ticks in the progress bar ('pgTotal')
+--     - the width in characters the progress bar will take ('pgWidth')
+--     - the completion character ('pgCompletedChar')
+--     - the pending character ('pgPendingChar')
+--     - an 'IO' action to be ran when the progress bar is completed, on its line
+--       ('pgOnCompletion')
+--     - the format of the progress bar, which brings us to the next section
+--       ('pgFormat')
+--
+-- == About 'pgFormat', what gets displayed and how
+-- @ascii-progress@ comes built in with support for displaying things like the
+-- elapsed time, the current tick, the ETA and more. There are two ways to
+-- specify it to the library:
+--
+-- === Using a 'Text' printf-style format string
+-- @
+-- def { pgFormat = "[:bar] for :elapsed seconds" }
+-- -- Which will be something like: "[========            ] for  3.2 seconds"
+-- @
+--
+-- === Using a 'ProgressFormat', which is just an alias to @Format Text (Stats -> Text)@
+-- @
+-- def { pgFormat = "[" % bar % "] " <> elapsed }
+-- -- Same as above, but type-safe and extensible
+-- @
+--
+-- == Wait 'Stats' what?
+-- @ascii-progress@ uses a 'Stats' type to represent the data required for each
+-- render. It then exposes several formatters which just introspect into the
+-- type. You may both define your own formatters, by looking at the type, and
+-- manually get the 'Stats' object with 'getProgressStats'.
 module System.Console.AsciiProgress
-    ( ProgressBar(..)
-    , Options(..)
-    , Stats(..)
-    , isComplete
+    (
+    -- * Basic functions and types
+      ProgressBar(..)
     , newProgressBar
-    , complete
     , tick
     , tickN
-    , getProgressTxtIO
+    -- ** Querying for completion
+    , isComplete
+    , complete
+    -- ** Getting the progress bar state in time
+    , Stats(..)
     , getProgressStats
-    , getProgressTxt
-    , registerLn
-    -- Formatters
+    -- * Options
+    , Options(..)
+    -- ** Formatters
     , ProgressFormat
     , eta
     , elapsed
@@ -20,7 +102,11 @@ module System.Console.AsciiProgress
     , percent
     , current
     , bar
-    -- Re-exports:
+    , registerLn
+    -- ** Manually getting the progress bar string representation
+    , getProgressTxt
+    , getProgressTxtIO
+    -- ** Re-exports for convenience
     , Default(..)
     , (%)
     , (%.)

@@ -19,21 +19,21 @@ mockStats = Stats { stTotal = 100
 
 spec :: Spec
 spec = do
-    describe "getProgressStr :: Options -> Integer -> String" $ do
+    describe "getProgressTxt :: Options -> Integer -> Text" $ do
         it "fills the completed percentage of the total width" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
-                           , pgFormat = bar
+                           , pgFormat = Left bar
                            }
-            getProgressStr opts mockStats `shouldBe`
+            getProgressTxt opts mockStats `shouldBe`
                 "==========                                                                                          "
 
-        it "replaces `:bar` in the `pgFormat` format `String`" $ do
+        it "replaces `:bar` in the `pgFormat` format `Text`" $ do
             let opts = def { pgTotal = 100
                            , pgWidth = 100
-                           , pgFormat = "working [" % bar % "]"
+                           , pgFormat = Left $ "working [" % bar % "]"
                            }
-            getProgressStr opts mockStats `shouldBe`
+            getProgressTxt opts mockStats `shouldBe`
                 "working [=========                                                                                 ]"
 
         it "uses the options' completed and pending characters" $ do
@@ -41,9 +41,9 @@ spec = do
                            , pgWidth = 100
                            , pgCompletedChar = '*'
                            , pgPendingChar = '-'
-                           , pgFormat = bar
+                           , pgFormat = Right ":bar"
                            }
-            getProgressStr opts mockStats `shouldBe`
+            getProgressTxt opts mockStats `shouldBe`
                 "**********------------------------------------------------------------------------------------------"
 
     describe "getBar :: Char -> Char -> Integer -> Double -> String" $

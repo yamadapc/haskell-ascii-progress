@@ -8,11 +8,12 @@ module System.Console.AsciiProgress
     , complete
     , tick
     , tickN
-    , getProgressStrIO
+    , getProgressTxtIO
     , getProgressStats
-    , getProgressStr
+    , getProgressTxt
     , registerLn
     -- Formatters
+    , ProgressFormat
     , eta
     , elapsed
     , total
@@ -21,15 +22,22 @@ module System.Console.AsciiProgress
     , bar
     -- Re-exports:
     , Default(..)
+    , (%)
+    , (%.)
+    , (<>)
     )
   where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (MVar, modifyMVar, modifyMVar_, newMVar, readChan,
-                           readMVar, writeChan)
+                           readMVar, withMVarMasked, writeChan)
 import Control.Concurrent.Async (Async, async, poll, wait)
 import Data.Default (Default(..))
 import Data.Maybe (isJust)
+import Data.Monoid ((<>))
+import Data.Text (Text)
+import qualified Data.Text.IO as T (putStr, putStrLn)
+import Formatting ((%), (%.))
 import System.Console.ANSI (clearLine, cursorDown, cursorUp, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 import System.IO.Unsafe (unsafePerformIO)
@@ -40,28 +48,16 @@ data ProgressBar = ProgressBar { pgInfo :: ProgressBarInfo
                                , pgFuture :: Async ()
                                }
 
-nlines :: MVar Int
-nlines = unsafePerformIO (newMVar 0)
-
-writeLock :: MVar ()
-writeLock = unsafePerformIO (newMVar ())
-
--- |
--- Registers a new line for multiple progress bars
-registerLn :: IO ()
-registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
-
 -- |
 -- Creates a new progress bar with the given @Options@. Multiple progress bars
 -- may be created as long as everytime a line is outputted by your program,
 -- while progress bars run is followed by a call to `registerLn`
 newProgressBar :: Options -> IO ProgressBar
-newProgressBar opts = do
+newProgressBar opts = withWriteLock $ do
     hSetBuffering stdout NoBuffering
     info <- newProgressBarInfo opts
     cnlines <- modifyMVar nlines $ \nl -> return (nl + 1, nl)
-    atProgressLine cnlines $
-        getProgressStr opts <$> getInfoStats info >>= putStrLn
+    getProgressTxt opts <$> getInfoStats info >>= T.putStrLn
     future <- async $ start info cnlines
     return $ ProgressBar info future
   where
@@ -69,7 +65,7 @@ newProgressBar opts = do
     unlessDone _ c action | c < pgTotal opts = action
     unlessDone cnlines _ _ = atProgressLine cnlines (pgOnCompletion opts)
 
-    atProgressLine cnlines action = do
+    atProgressLine cnlines action = withWriteLock $ do
         diff <- (\nl -> nl - cnlines) <$> readMVar nlines
         cursorUp diff
         resetCursor
@@ -85,14 +81,29 @@ newProgressBar opts = do
            unlessDone cnlines (c + n) $
                start info cnlines
 
-    handleMessage info cnlines n = modifyMVar_ writeLock $ const $ do
+    handleMessage info cnlines n = do
         -- Update the completed tick count
         modifyMVar_ (pgCompleted info) (\c -> return (c + n))
         -- Find and update the current and first tick times:
         stats <- getInfoStats info
-        let progressStr = getProgressStr opts stats
+        let progressTxt = getProgressTxt opts stats
         atProgressLine cnlines $
-            putStr progressStr
+            T.putStr progressTxt
+
+nlines :: MVar Int
+nlines = unsafePerformIO (newMVar 0)
+
+writeLock :: MVar ()
+writeLock = unsafePerformIO (newMVar ())
+
+withWriteLock :: IO a -> IO a
+withWriteLock action = withMVarMasked writeLock (const action)
+
+-- |
+-- Registers a new line for multiple progress bars
+registerLn :: IO ()
+registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
+
 
 -- |
 -- Tick the progress bar
@@ -126,6 +137,6 @@ getProgressStats (ProgressBar info _) = getInfoStats info
 -- |
 -- Like @getProgressStr@ but works on the @ProgressBar@ object and uses the IO
 -- monad.
-getProgressStrIO :: ProgressBar -> IO String
-getProgressStrIO (ProgressBar info _) =
-    getProgressStr (pgOptions info) <$> getInfoStats info
+getProgressTxtIO :: ProgressBar -> IO Text
+getProgressTxtIO (ProgressBar info _) =
+    getProgressTxt (pgOptions info) <$> getInfoStats info

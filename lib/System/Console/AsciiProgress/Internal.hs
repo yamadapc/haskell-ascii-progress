@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MagicHash, UnboxedTuples #-}
@@ -8,25 +9,48 @@ import Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
                            readMVar, tryPutMVar)
 import Data.Default (Default(..))
 import Data.Monoid ((<>))
-import Data.Time.Clock
-import Data.Text (Text, unpack)
+import Data.Time.Clock (UTCTime, diffUTCTime, getCurrentTime)
+import Data.Text (Text, pack, replace)
+import qualified Data.Text as T (length)
 import Data.Text.Buildable (build)
 import Formatting hiding (build)
 import GHC.Base (IO(..), tryReadMVar#)
 import GHC.MVar (MVar(..))
 import Text.Printf
 
+type ProgressFormat = Format Text (Stats -> Text)
+
 -- |
 -- The progress bar's options.
-data Options = Options { pgFormat :: Format Text (Stats -> Text)
-                       -- ^ A format string for the progress bar. Currently the
-                       -- following format strings are supported:
-                       -- - ":eta" (ETA displayed in seconds)
-                       -- - ":current" (current tick)
-                       -- - ":total" (total number of ticks)
-                       -- - ":percent" (percentage completed)
-                       -- - ":elapsed" (elapsed time in seconds)
-                       -- - ":bar" (the actual progress bar)
+data Options = Options { pgFormat :: Either ProgressFormat Text
+                       -- ^ Either a 'Format' or a 'Text' representation of
+                       -- the format for the progress bar. Currently the
+                       -- following formatters are supported:
+                       --
+                       --     - 'eta' (ETA displayed in seconds)
+                       --     - 'current' (current tick)
+                       --     - 'total' (total number of ticks)
+                       --     - 'percent' (percentage completed)
+                       --     - 'elapsed' (elapsed time in seconds)
+                       --     - 'bar' (the actual progress bar)
+                       --
+                       -- Because all formatters work over the 'Stats' type,
+                       -- they must be chained with a mix of '%' and '<>':
+                       --
+                       --     @
+                       -- def { pgFormat = Left $ total % "/" <> current <>
+                       --                  " [" % bar % "]"
+                       --     }
+                       --     @
+                       --
+                       -- If a 'Text' is supplied, instead of a 'Format', the
+                       -- same formatters are supported, but they're
+                       -- represented prefixed by ":". For example:
+                       --
+                       --     @
+                       -- def { pgFormat = Right $ ":total/:current [:bar]"
+                       --     }
+                       --     @
                        , pgCompletedChar :: Char
                        -- ^ Character to be used on the completed part of the
                        -- bar
@@ -42,9 +66,11 @@ data Options = Options { pgFormat :: Format Text (Stats -> Text)
                        }
 
 instance Default Options where
-    def = Options { pgFormat = "Working " % percent <> " [" % bar % "] " <>
-                               current % "/" <> total %
-                               " (for " <> elapsed % ", " <> eta % " remaining)"
+    def = Options { pgFormat = Left $ "Working " % percent <>
+                                      " [" % bar % "] " <>
+                                      current % "/" <> total <>
+                                      " (for " % elapsed % ", " <>
+                                      eta % " remaining)"
                   , pgCompletedChar = '='
                   , pgPendingChar = ' '
                   , pgTotal = 20
@@ -81,14 +107,27 @@ newProgressBarInfo opts = do
     return $ ProgressBarInfo opts chan mcompleted mfirstTick
 
 -- |
--- Gets the string to be printed given the options object and a certain stats
+-- Gets the 'Text' to be printed given the options object and a certain stats
 -- object representing the rendering moment.
-getProgressStr :: Options -> Stats -> String
-getProgressStr Options{..} st@Stats{..} = replace ":bar" barStr statsStr
+getProgressTxt :: Options -> Stats -> Text
+getProgressTxt Options{..} st@Stats{..} = replace ":bar" (pack barStr) statsTxt
   where
-    statsStr = unpack (sformat pgFormat st)
-    barWidth = pgWidth - fromIntegral (length (replace ":bar" "" statsStr))
+    statsTxt = getStatsTxt pgFormat st
+    barWidth = pgWidth - fromIntegral (T.length (replace ":bar" "" statsTxt))
     barStr   = getBar pgCompletedChar pgPendingChar barWidth stPercent
+
+-- |
+-- Gets a partial representation of the progress bar for a certain stats object
+getStatsTxt :: Either ProgressFormat Text -> Stats -> Text
+getStatsTxt (Right fmt) st = replaceMany (map (\(s, f) -> (s, sformat f st))
+                                              [ (":elapsed", elapsed)
+                                              , (":current", current)
+                                              , (":total"  , total)
+                                              , (":percent", percent)
+                                              , (":eta"    , eta)
+                                              ])
+                                          fmt
+getStatsTxt (Left fmt) st = sformat fmt st
 
 -- |
 -- Creates a stats object for a given @ProgressBarInfo@ node. This is the core
@@ -111,7 +150,8 @@ getInfoStats info = do
 -- characters, width and a completeness percentage.
 getBar :: Char -> Char -> Integer -> Double -> String
 getBar completedChar pendingChar width per =
-    replicate (fromInteger bcompleted) completedChar ++ replicate (fromInteger bremaining) pendingChar
+    replicate (fromInteger bcompleted) completedChar ++
+    replicate (fromInteger bremaining) pendingChar
   where
     fwidth = fromIntegral width
     bcompleted = ceiling $ fwidth * per
@@ -131,9 +171,40 @@ getElapsed initTime currentTime = realToFrac (diffUTCTime currentTime initTime)
 -- >>> getEta 30 70 23.3
 -- 54.366666666666674
 getEta :: Integer -> Integer -> Double -> Double
+getEta 0 _ _ = 0
 getEta completed remaining ela = averageSecsPerTick * fromIntegral remaining
   where
     averageSecsPerTick = ela / fromIntegral completed
+
+-- |
+-- ETA displayed in seconds
+eta :: Format r (Stats -> r)
+eta = slaterBuild stEta (printf "%5.1f" :: Double -> String)
+
+-- |
+-- The elapsed time in seconds
+elapsed :: Format r (Stats -> r)
+elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
+
+-- |
+-- The total number of ticks
+total :: Format r (Stats -> r)
+total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
+
+-- |
+-- The percentage that is completed
+percent :: Format r (Stats -> r)
+percent = slaterBuild stPercent $
+              (printf "%3d%%" :: Int -> String) . floor . (100 *)
+-- |
+-- The current tick
+current :: Format r (Stats -> r)
+current = slaterBuild stCompleted (printf "%3d" :: Integer -> String)
+
+-- |
+-- The actual progress bar
+bar :: Format Text (Stats -> Text)
+bar = laterBuild $ const (":bar" :: Text)
 
 laterBuild :: Buildable b => (a -> b) -> Format r (a -> r)
 laterBuild f = later (build . f)
@@ -141,27 +212,9 @@ laterBuild f = later (build . f)
 slaterBuild :: Buildable b => (a -> c) -> (c -> b) -> Format r (a -> r)
 slaterBuild p f = laterBuild (f . p)
 
-eta :: Format r (Stats -> r)
-eta = slaterBuild stEta (printf "%5.1f" :: Double -> String)
-
-elapsed :: Format r (Stats -> r)
-elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
-
-total :: Format r (Stats -> r)
-total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
-
-percent :: Format r (Stats -> r)
-percent = slaterBuild stPercent $
-              (printf "%3d%%" :: Int -> String) . floor . (100 *)
-
-current :: Format r (Stats -> r)
-current = slaterBuild stCompleted (printf "%3d" :: Integer -> String)
-
-bar :: Format Text (Stats -> Text)
-bar = laterBuild $ const (":bar" :: Text)
-
 -- |
--- Replaces each pair in a list of replacement pairs in a list with replace.
+-- Replaces each pair in a list of replacement pairs in a 'Text' with
+-- 'Data.Text.replace'.
 -- The idea is to call @(\(old, new) target -> replace old new target)@ on each
 -- of the pairs, accumulating the resulting modified list.
 --
@@ -171,30 +224,8 @@ bar = laterBuild $ const (":bar" :: Text)
 -- "foobiz"
 -- >>> replaceMany [("foo", "baz"), ("bar", "biz")] "foobar"
 -- "bazbiz"
-replaceMany :: Eq a => [([a], [a])] -> [a] -> [a]
+replaceMany :: [(Text, Text)] -> Text -> Text
 replaceMany pairs target = foldr (uncurry replace) target pairs
-
--- |
--- Replaces a subsequence by another in a sequence
---
--- Taken from http://bluebones.net/2007/01/replace-in-haskell/
---
--- >>> replace "foo" "baz" "foobar"
--- "bazbar"
--- >>> replace "some" "thing" "something something"
--- "thingthing thingthing"
--- >>> replace "not" "" "something"
--- "something"
--- >>> replace "" "here" "something"
--- "heresomething"
-replace :: Eq a => [a] -> [a] -> [a] -> [a]
-replace _ _ [] = []
-replace [] new target = new ++ target
-replace old new target@(t:ts) =
-  if take len target == old
-      then new ++ replace old new (drop len target)
-      else t : replace old new ts
-  where len = length old
 
 -- |
 -- Forces an MVar's contents to be read or swaped by a default value, even if

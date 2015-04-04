@@ -114,8 +114,8 @@ isComplete (ProgressBar _ future) = isJust <$> poll future
 -- Forces a 'ProgressBar' to finish
 complete :: ProgressBar -> IO ()
 complete pg@(ProgressBar info future) = do
-    let total = pgTotal (pgOptions info)
-    tickN pg total
+    let tot = pgTotal (pgOptions info)
+    tickN pg tot
     wait future
 
 -- |

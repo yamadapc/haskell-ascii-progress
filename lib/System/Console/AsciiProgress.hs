@@ -131,7 +131,7 @@ module System.Console.AsciiProgress
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (MVar, modifyMVar, modifyMVar_, newMVar, readChan,
-                           readMVar, withMVarMasked, writeChan)
+                           readMVar, withMVar, writeChan)
 import Control.Concurrent.STM (atomically, modifyTVar, readTVarIO)
 import Control.Concurrent.Async (Async, async, poll, wait)
 import Control.Monad (void)
@@ -201,7 +201,7 @@ writeLock :: MVar ()
 writeLock = unsafePerformIO (newMVar ())
 
 withWriteLock :: IO a -> IO a
-withWriteLock action = withMVarMasked writeLock (const action)
+withWriteLock action = withMVar writeLock (const action)
 
 -- |
 -- Registers a new line for multiple progress bars

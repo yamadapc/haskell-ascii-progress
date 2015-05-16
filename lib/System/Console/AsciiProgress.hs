@@ -96,7 +96,7 @@ module System.Console.AsciiProgress
     , newProgressBar
     , tick
     , tickN
-    -- ** Querying for completion
+    -- ** Querying and forcing completion
     , isComplete
     , complete
     -- ** Getting the progress bar state in time

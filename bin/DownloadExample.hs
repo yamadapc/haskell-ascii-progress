@@ -34,6 +34,6 @@ main = withManager $ \manager -> do
 updateProgress :: MonadIO m => ProgressBar -> ConduitM ByteString ByteString m ()
 updateProgress pg = await >>= maybe (return ()) (\chunk -> do
     let len = ByteString.length chunk
-    liftIO $ tickN pg len
+    liftIO $ tickN pg (fromIntegral len)
     yield chunk
     updateProgress pg)

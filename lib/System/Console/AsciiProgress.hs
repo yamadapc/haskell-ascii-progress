@@ -212,12 +212,12 @@ registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
 -- |
 -- Tick the progress bar
 tick :: ProgressBar -> IO ()
-tick pg = tickN pg (1 :: Integer)
+tick pg = tickN pg 1
 
 -- |
 -- Tick the progress bar N times
-tickN :: Integral a => ProgressBar -> a -> IO ()
-tickN (ProgressBar info _) = writeChan (pgChannel info) . fromIntegral
+tickN :: ProgressBar -> Integer -> IO ()
+tickN (ProgressBar info _) = writeChan (pgChannel info)
 
 -- |
 -- Returns if the progress bar rendering thread has exited (it has done enough

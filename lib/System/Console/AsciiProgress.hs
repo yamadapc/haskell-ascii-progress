@@ -87,7 +87,7 @@
 -- define these kinds of formatters using this module.
 --
 -- Please take a look at
--- <https://github.com/yamadapc/haskell-ascii-progress/blob/master/lib/System/Console/AsciiProgress/Formatting.hs the source code>
+-- <https://github.com/yamadapc/haskell-ascii-progress-formatting/blob/master/lib/System/Console/AsciiProgress/Formatting.hs the source code>
 -- for examples for better information.
 module System.Console.AsciiProgress
     (
@@ -114,8 +114,8 @@ module System.Console.AsciiProgress
     , current
     , bar
     -- *** Extra Formatters
-    , currentFilesize
-    , totalFilesize
+    -- , currentFilesize
+    -- , totalFilesize
     -- ** Manually getting the progress bar string representation
     , getProgressTxt
     , getProgressTxtIO
@@ -123,8 +123,8 @@ module System.Console.AsciiProgress
     , registerLn
     -- * Re-exports for convenience
     , Default(..)
-    , (%)
-    , (%.)
+    -- , (%)
+    -- , (%.)
     , (<>)
     )
   where
@@ -140,12 +140,10 @@ import Data.Maybe (isJust)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text.IO as T (putStr, putStrLn)
-import Formatting ((%), (%.))
 import System.Console.ANSI (clearLine, cursorDown, cursorUp, setCursorColumn)
 import System.IO (BufferMode(..), hSetBuffering, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 
-import System.Console.AsciiProgress.Formatting
 import System.Console.AsciiProgress.Internal
 
 data ProgressBar = ProgressBar { pgInfo :: ProgressBarInfo

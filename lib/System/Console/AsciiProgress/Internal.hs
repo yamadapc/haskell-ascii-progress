@@ -20,8 +20,8 @@ import Data.Monoid ((<>))
 import Data.Time.Clock (UTCTime, diffUTCTime, getCurrentTime)
 import Data.Text (Text, pack, replace)
 import qualified Data.Text as T (length)
-import Data.Text.Buildable (build)
-import Formatting hiding (build)
+-- import Data.Text.Buildable (build)
+-- import Formatting hiding (build)
 import Text.Printf
 
 -- |
@@ -76,11 +76,9 @@ data Options = Options { pgFormat :: Either ProgressFormat Text
                        }
 
 instance Default Options where
-    def = Options { pgFormat = Left $ "Working " % percent <>
-                                      " [" % bar % "] " <>
-                                      current % "/" <> total <>
-                                      " (for " % elapsed % ", " <>
-                                      eta % " remaining)"
+    def = Options { pgFormat = Right $
+                                   "Working :percent [:bar] :current/:total " <>
+                                   "(for :elapsed, :eta remaining)"
                   , pgCompletedChar = '='
                   , pgPendingChar = ' '
                   , pgTotal = 20
@@ -129,7 +127,7 @@ getProgressTxt Options{..} st@Stats{..} = replace ":bar" (pack barStr) statsTxt
 -- |
 -- Gets a partial representation of the progress bar for a certain stats object
 getStatsTxt :: Either ProgressFormat Text -> Stats -> Text
-getStatsTxt (Right fmt) st = replaceMany (map (\(s, f) -> (s, sformat f st))
+getStatsTxt (Right fmt) st = replaceMany (map (\(s, f) -> (s, f st))
                                               [ (":elapsed", elapsed)
                                               , (":current", current)
                                               , (":total"  , total)
@@ -137,7 +135,7 @@ getStatsTxt (Right fmt) st = replaceMany (map (\(s, f) -> (s, sformat f st))
                                               , (":eta"    , eta)
                                               ])
                                           fmt
-getStatsTxt (Left fmt) st = sformat fmt st
+getStatsTxt (Left fmt) st = fmt st
 
 -- |
 -- Creates a stats object for a given @ProgressBarInfo@ node. This is the core
@@ -189,43 +187,37 @@ getEta completed remaining ela = averageSecsPerTick * fromIntegral remaining
 -- |
 -- The specific formatting type used in @ascii-progress@. It conveys that all
 -- our formatters take a 'Stats' object and return a 'Text'.
-type ProgressFormat = Format Text (Stats -> Text)
+type ProgressFormat = Stats -> Text
 
 -- |
 -- ETA displayed in seconds
 eta :: ProgressFormat
-eta = slaterBuild stEta (printf "%5.1f" :: Double -> String)
+eta = pack . (printf "%5.1f" :: Double -> String) . stEta
 
 -- |
 -- The elapsed time in seconds
 elapsed :: ProgressFormat
-elapsed = slaterBuild stElapsed (printf "%5.1f" :: Double -> String)
+elapsed = pack . (printf "%5.1f" :: Double -> String) . stElapsed
 
 -- |
 -- The current tick
 current :: ProgressFormat
-current = slaterBuild stCurrent (printf "%3d" :: Integer -> String)
+current = pack . (printf "%3d" :: Integer -> String) . stCurrent
 
 -- |
 -- The total number of ticks
 total :: ProgressFormat
-total = slaterBuild stTotal (printf "%3d" :: Integer -> String)
+total = pack . (printf "%3d" :: Integer -> String) . stTotal
 
 -- |
 -- The percentage that is completed
 percent :: ProgressFormat
-percent = slaterBuild stPercent $
-              (printf "%3d%%" :: Int -> String) . floor . (100 *)
+percent = pack . (printf "%3d%%" :: Int -> String) . floor . (100 *) . stPercent
+
 -- |
 -- The actual progress bar
 bar :: ProgressFormat
-bar = laterBuild $ const (":bar" :: Text)
-
-laterBuild :: Buildable b => (a -> b) -> Format r (a -> r)
-laterBuild f = later (build . f)
-
-slaterBuild :: Buildable b => (a -> c) -> (c -> b) -> Format r (a -> r)
-slaterBuild p f = laterBuild (f . p)
+bar = const (":bar" :: Text)
 
 -- |
 -- Replaces each pair in a list of replacement pairs in a 'Text' with

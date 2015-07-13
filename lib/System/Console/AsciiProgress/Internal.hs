@@ -20,8 +20,6 @@ import Data.Monoid ((<>))
 import Data.Time.Clock (UTCTime, diffUTCTime, getCurrentTime)
 import Data.Text (Text, pack, replace)
 import qualified Data.Text as T (length)
--- import Data.Text.Buildable (build)
--- import Formatting hiding (build)
 import Text.Printf
 
 -- |

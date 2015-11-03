@@ -1,0 +1,7 @@
+flags:
+  ascii-progress:
+    examples: false
+packages:
+- '.'
+extra-deps: []
+resolver: lts-3.10

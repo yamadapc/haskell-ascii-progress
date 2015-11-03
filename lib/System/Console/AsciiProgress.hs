@@ -17,19 +17,25 @@ module System.Console.AsciiProgress
     )
   where
 
-import Control.Applicative ((<$>))
-import Control.Concurrent (MVar, modifyMVar, modifyMVar_, newMVar, readChan,
-                           readMVar, writeChan)
-import Control.Concurrent.Async (Async, async, poll, wait)
-import Data.Default (Default(..))
-import Data.Maybe (isJust)
-import System.Console.ANSI (clearLine, cursorDown, cursorUp, setCursorColumn)
-import System.IO (BufferMode(..), hSetBuffering, stdout)
-import System.IO.Unsafe (unsafePerformIO)
+import           Control.Applicative                   ((<$>))
+import           Control.Concurrent                    (MVar, modifyMVar,
+                                                        modifyMVar_, newMVar,
+                                                        readChan, readMVar,
+                                                        writeChan)
+import           Control.Concurrent.Async              (Async, async, poll,
+                                                        wait)
+import           Data.Default                          (Default (..))
+import           Data.Maybe                            (isJust)
+import           System.Console.ANSI                   (clearLine, cursorDown,
+                                                        cursorUp,
+                                                        setCursorColumn)
+import           System.IO                             (BufferMode (..),
+                                                        hSetBuffering, stdout)
+import           System.IO.Unsafe                      (unsafePerformIO)
 
-import System.Console.AsciiProgress.Internal
+import           System.Console.AsciiProgress.Internal
 
-data ProgressBar = ProgressBar { pgInfo :: ProgressBarInfo
+data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
                                , pgFuture :: Async ()
                                }
 
@@ -66,7 +72,7 @@ newProgressBar opts = do
         diff <- (\nl -> nl - cnlines) <$> readMVar nlines
         cursorUp diff
         resetCursor
-        action
+        _ <- action
         cursorDown diff
         resetCursor
 

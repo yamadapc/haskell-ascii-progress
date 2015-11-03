@@ -1,19 +1,20 @@
+{-# LANGUAGE MagicHash       #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE MagicHash, UnboxedTuples #-}
+{-# LANGUAGE UnboxedTuples   #-}
 module System.Console.AsciiProgress.Internal
   where
 
-import Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
-                           readMVar, tryPutMVar)
-import Data.Default (Default(..))
-import Data.Time.Clock
-import GHC.Base (IO(..), tryReadMVar#)
-import GHC.MVar (MVar(..))
-import Text.Printf
+import           Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
+                                     readMVar, tryPutMVar)
+import           Data.Default       (Default (..))
+import           Data.Time.Clock
+import           GHC.Base           (IO (..), tryReadMVar#)
+import           GHC.MVar           (MVar (..))
+import           Text.Printf
 
 -- |
 -- The progress bar's options.
-data Options = Options { pgFormat :: String
+data Options = Options { pgFormat        :: String
                        -- ^ A format string for the progress bar. Currently the
                        -- following format strings are supported:
                        -- - ":eta" (ETA displayed in seconds)
@@ -25,13 +26,13 @@ data Options = Options { pgFormat :: String
                        , pgCompletedChar :: Char
                        -- ^ Character to be used on the completed part of the
                        -- bar
-                       , pgPendingChar :: Char
+                       , pgPendingChar   :: Char
                        -- ^ Character to be used on the pending part of the bar
-                       , pgTotal :: Int
+                       , pgTotal         :: Int
                        -- ^ Total amount of ticks expected
-                       , pgWidth :: Int
+                       , pgWidth         :: Int
                        -- ^ The progress bar's width
-                       , pgOnCompletion :: IO ()
+                       , pgOnCompletion  :: IO ()
                        -- ^ An IO action to be executed on completion, with the
                        -- cursor set at progress bar's line
                        }
@@ -49,20 +50,20 @@ instance Default Options where
 -- |
 -- The progress bar's state object. Contains all but the printing thread's
 -- @Async@ object.
-data ProgressBarInfo = ProgressBarInfo { pgOptions :: Options
-                                       , pgChannel :: Chan Int
+data ProgressBarInfo = ProgressBarInfo { pgOptions   :: Options
+                                       , pgChannel   :: Chan Int
                                        , pgCompleted :: MVar Int
                                        , pgFirstTick :: MVar UTCTime
                                        }
 
 -- |
 -- Represents a point in time for the progress bar.
-data Stats = Stats { stTotal :: Int
+data Stats = Stats { stTotal     :: Int
                    , stCompleted :: Int
                    , stRemaining :: Int
-                   , stElapsed :: Double
-                   , stPercent :: Double
-                   , stEta :: Double
+                   , stElapsed   :: Double
+                   , stPercent   :: Double
+                   , stEta       :: Double
                    }
 
 -- |
@@ -132,6 +133,7 @@ getElapsed initTime currentTime = realToFrac (diffUTCTime currentTime initTime)
 -- >>> getEta 30 70 23.3
 -- 54.366666666666674
 getEta :: Int -> Int -> Double -> Double
+getEta 0 _ _ = 0
 getEta completed remaining elapsed = averageSecsPerTick * fromIntegral remaining
   where
     averageSecsPerTick = elapsed / fromIntegral completed

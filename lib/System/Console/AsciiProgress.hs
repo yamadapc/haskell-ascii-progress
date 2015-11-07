@@ -1,3 +1,4 @@
+
 {-# LANGUAGE RecordWildCards #-}
 module System.Console.AsciiProgress
     ( ProgressBar(..)
@@ -29,11 +30,10 @@ import           Data.Maybe                            (isJust)
 import           System.Console.ANSI                   (clearLine, cursorDown,
                                                         cursorUp,
                                                         setCursorColumn)
+import           System.Console.AsciiProgress.Internal
 import           System.IO                             (BufferMode (..),
                                                         hSetBuffering, stdout)
 import           System.IO.Unsafe                      (unsafePerformIO)
-
-import           System.Console.AsciiProgress.Internal
 
 data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
                                , pgFuture :: Async ()
@@ -59,8 +59,9 @@ newProgressBar opts = do
     hSetBuffering stdout NoBuffering
     info <- newProgressBarInfo opts
     cnlines <- modifyMVar nlines $ \nl -> return (nl + 1, nl)
+    putStrLn ""
     atProgressLine cnlines $
-        getProgressStr opts <$> getInfoStats info >>= putStrLn
+        getProgressStr opts <$> getInfoStats info >>= putStr
     future <- async $ start info cnlines
     return $ ProgressBar info future
   where

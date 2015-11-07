@@ -32,9 +32,8 @@ data Options = Options { pgFormat        :: String
                        -- ^ Total amount of ticks expected
                        , pgWidth         :: Int
                        -- ^ The progress bar's width
-                       , pgOnCompletion  :: IO ()
-                       -- ^ An IO action to be executed on completion, with the
-                       -- cursor set at progress bar's line
+                       , pgOnCompletion  :: Maybe String
+                       -- ^ What to output when the progress bar is done
                        }
 
 instance Default Options where
@@ -44,7 +43,7 @@ instance Default Options where
                   , pgPendingChar = ' '
                   , pgTotal = 20
                   , pgWidth = 80
-                  , pgOnCompletion = return ()
+                  , pgOnCompletion = Nothing
                   }
 
 -- |

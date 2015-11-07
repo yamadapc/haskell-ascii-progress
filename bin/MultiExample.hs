@@ -1,23 +1,22 @@
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.Async (wait)
-import Control.Monad (unless)
-import System.Console.AsciiProgress (ProgressBar(..), Options(..), isComplete,
-                                     def, newProgressBar, tick)
+import           Control.Concurrent           (forkIO, threadDelay)
+import           Control.Concurrent.Async     (wait)
+import           Control.Monad                (unless)
+import           System.Console.AsciiProgress
 
 main :: IO ()
-main = do
+main = displayConsoleRegions $ do
     pg1 <- newProgressBar def { pgWidth = 100
-                              , pgOnCompletion = putStr "pg 1 is Done!"
+                              , pgOnCompletion = Just "pg 1 is Done!"
                               }
     _ <- forkIO $ loop pg1 (100 * 1000)
 
     pg2 <- newProgressBar def { pgWidth = 100
-                              , pgOnCompletion = putStr "pg 2 is Done!"
+                              , pgOnCompletion = Just "pg 2 is Done!"
                               }
     _ <- forkIO $ loop pg2 (400 * 1000)
 
     pg3 <- newProgressBar def { pgWidth = 100
-                              , pgOnCompletion = putStr "pg 3 is Done!"
+                              , pgOnCompletion = Just "pg 3 is Done!"
                               }
     _ <- forkIO $ loop pg3 (200 * 1000)
 

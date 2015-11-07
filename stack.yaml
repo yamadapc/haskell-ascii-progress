@@ -3,5 +3,6 @@ flags:
     examples: false
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+- concurrent-output-1.2.0
 resolver: lts-3.10

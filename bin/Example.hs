@@ -1,11 +1,12 @@
-import Control.Concurrent (threadDelay)
-import Control.Monad (unless)
-import System.Console.AsciiProgress (Options(..), isComplete, def,
-                                     newProgressBar, tick)
+import           Control.Concurrent           (threadDelay)
+import           Control.Monad                (unless)
+import           System.Console.AsciiProgress
 
 main :: IO ()
-main = do
-    pg <- newProgressBar def { pgWidth = 100 }
+main = displayConsoleRegions $ do
+    pg <- newProgressBar def { pgWidth = 100
+                             , pgOnCompletion = Just "Done :percent after :elapsed seconds"
+                             }
     loop pg
   where
     loop pg = do

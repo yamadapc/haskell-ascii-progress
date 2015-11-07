@@ -29,6 +29,7 @@ library
   exposed-modules:     System.Console.AsciiProgress
                      , System.Console.AsciiProgress.Internal
   build-depends:       ansi-terminal
+                     , concurrent-output
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -45,6 +46,7 @@ executable example
   else
     buildable: True
     build-depends:     ansi-terminal
+                     , concurrent-output
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -61,6 +63,7 @@ executable download-example
   else
     buildable: True
     build-depends:     HTTP
+                     , concurrent-output
                      , ansi-terminal
                      , async >= 2.0.1.5
                      , base >=4 && <5
@@ -83,9 +86,28 @@ executable multi-example
   else
     buildable: True
     build-depends:     ansi-terminal
+                     , concurrent-output
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
+                     , time >= 1.4.2
+    hs-source-dirs:    lib
+                     , bin
+
+executable crazy-multi-example
+  main-is:             CrazyMultiExample.hs
+  default-language:    Haskell2010
+
+  if !flag(examples)
+    buildable: False
+  else
+    buildable: True
+    build-depends:     ansi-terminal
+                     , concurrent-output
+                     , async >= 2.0.1.5
+                     , base >=4 && <5
+                     , data-default >= 0.5.3
+                     , random
                      , time >= 1.4.2
     hs-source-dirs:    lib
                      , bin
@@ -94,6 +116,7 @@ test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
   build-depends:       ansi-terminal
+                     , concurrent-output
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3

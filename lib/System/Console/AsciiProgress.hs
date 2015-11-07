@@ -15,24 +15,31 @@ module System.Console.AsciiProgress
     , registerLn
     -- Re-exports:
     , Default(..)
+    , module System.Console.Regions
+    , module System.Console.Concurrent
     )
   where
-
 import           Control.Applicative                   ((<$>))
-import           Control.Concurrent                    (MVar, modifyMVar,
-                                                        modifyMVar_, newMVar,
-                                                        readChan, readMVar,
-                                                        writeChan)
-import           Control.Concurrent.Async              (Async, async, poll,
-                                                        wait)
+import           Control.Concurrent                    (MVar, forkIO,
+                                                        modifyMVar, modifyMVar_,
+                                                        newMVar, readChan,
+                                                        readMVar, writeChan)
+import           Control.Concurrent.Async
+import           Debug.Trace
+-- (Async, async, poll,
+                                                        -- wait)
 import           Data.Default                          (Default (..))
-import           Data.Maybe                            (isJust)
+import           Data.Maybe                            (fromMaybe, isJust)
 import           System.Console.ANSI                   (clearLine, cursorDown,
                                                         cursorUp,
                                                         setCursorColumn)
 import           System.Console.AsciiProgress.Internal
+import           System.Console.Concurrent
+import           System.Console.Regions
 import           System.IO                             (BufferMode (..),
-                                                        hSetBuffering, stdout)
+                                                        hPutStrLn,
+                                                        hSetBuffering, stderr,
+                                                        stdout)
 import           System.IO.Unsafe                      (unsafePerformIO)
 
 data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
@@ -41,9 +48,6 @@ data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
 
 nlines :: MVar Int
 nlines = unsafePerformIO (newMVar 0)
-
-writeLock :: MVar ()
-writeLock = unsafePerformIO (newMVar ())
 
 -- |
 -- Registers a new line for multiple progress bars
@@ -56,43 +60,36 @@ registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
 -- while progress bars run is followed by a call to `registerLn`
 newProgressBar :: Options -> IO ProgressBar
 newProgressBar opts = do
-    hSetBuffering stdout NoBuffering
+    region <- openConsoleRegion Linear
     info <- newProgressBarInfo opts
-    cnlines <- modifyMVar nlines $ \nl -> return (nl + 1, nl)
-    putStrLn ""
-    atProgressLine cnlines $
-        getProgressStr opts <$> getInfoStats info >>= putStr
-    future <- async $ start info cnlines
+
+    -- Display initial progress-bar
+    pgStr <- getProgressStr opts <$> getInfoStats info
+    setConsoleRegion region pgStr
+
+    future <- async $ start info region
     return $ ProgressBar info future
   where
-    resetCursor = clearLine >> setCursorColumn 0
-    unlessDone _ c action | c < pgTotal opts = action
-    unlessDone cnlines _ _ = atProgressLine cnlines (pgOnCompletion opts)
-
-    atProgressLine cnlines action = do
-        diff <- (\nl -> nl - cnlines) <$> readMVar nlines
-        cursorUp diff
-        resetCursor
-        _ <- action
-        cursorDown diff
-        resetCursor
-
-    start info@ProgressBarInfo{..} cnlines = do
+    start info@ProgressBarInfo{..} region = do
        c <- readMVar pgCompleted
-       unlessDone cnlines c $ do
+       unlessDone c $ do
            n <- readChan pgChannel
-           handleMessage info cnlines n
-           unlessDone cnlines (c + n) $
-               start info cnlines
+           _ <- handleMessage info region n
+           unlessDone (c + n) $ start info region
+      where
+        unlessDone c action | c < pgTotal opts = action
+        unlessDone _ _ = do
+            let fmt = fromMaybe (pgFormat opts) (pgOnCompletion opts)
+            onCompletion <- getProgressStr opts { pgFormat = fmt } <$> getInfoStats info
+            finishConsoleRegion region onCompletion
 
-    handleMessage info cnlines n = modifyMVar_ writeLock $ const $ do
+    handleMessage info region n = do
         -- Update the completed tick count
         modifyMVar_ (pgCompleted info) (\c -> return (c + n))
         -- Find and update the current and first tick times:
         stats <- getInfoStats info
         let progressStr = getProgressStr opts stats
-        atProgressLine cnlines $
-            putStr progressStr
+        setConsoleRegion region progressStr
 
 -- |
 -- Tick the progress bar

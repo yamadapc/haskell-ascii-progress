@@ -1,17 +1,17 @@
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.ByteString as ByteString (length)
-import Data.ByteString (ByteString)
-import Data.ByteString.Char8 as ByteString (unpack)
-import Data.Conduit (ConduitM, ($=+), ($$+-), await, yield)
-import Data.Conduit.List (sinkNull)
-import Network.HTTP.Conduit (http, parseUrl, responseBody, responseHeaders,
-                             withManager)
-import Network.HTTP.Types (hContentLength)
-import System.Console.AsciiProgress (ProgressBar, Options(..), complete, def,
-                                     newProgressBar, tickN)
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Data.ByteString              (ByteString)
+import qualified Data.ByteString              as ByteString (length)
+import           Data.ByteString.Char8        as ByteString (unpack)
+import           Data.Conduit                 (ConduitM, await, yield, ($$+-),
+                                               ($=+))
+import           Data.Conduit.List            (sinkNull)
+import           Network.HTTP.Conduit         (http, parseUrl, responseBody,
+                                               responseHeaders, withManager)
+import           Network.HTTP.Types           (hContentLength)
+import           System.Console.AsciiProgress
 
 main :: IO ()
-main = withManager $ \manager -> do
+main = withManager $ \manager -> displayConsoleRegions $ do
     -- Start the request
     req <- parseUrl "https://i.imgur.com/8CJGhZQ.gif"
     res <- http req manager
@@ -19,7 +19,7 @@ main = withManager $ \manager -> do
     let Just cl = lookup hContentLength (responseHeaders res)
     pg <- liftIO $ newProgressBar def { pgTotal = read (ByteString.unpack cl)
                                       , pgWidth = 100
-                                      , pgOnCompletion = putStrLn "Download done"
+                                      , pgOnCompletion = Just "Download done"
                                       }
     -- Consume the response updating the progress bar
     responseBody res $=+ updateProgress pg $$+- sinkNull

@@ -1,0 +1,11 @@
+#+title: Pending Tasks for haskell-ascii-progress
+#+author: Pedro Tacla Yamada
+#+date: 2015-11-07
+#+startup: overview
+
+* DONE Add failing concurrent examples
+  CLOSED: [2015-11-07 Sat 10:55]
+  :LOGBOOK:
+  CLOCK: [2015-11-07 Sat 09:26]--[2015-11-07 Sat 10:55] =>  1:29
+  :END:
+* TODO Use [[hackage.haskell.org/package/concurrent-output][concurrent-output]]

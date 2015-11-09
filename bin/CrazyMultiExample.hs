@@ -8,6 +8,7 @@ main :: IO ()
 main = displayConsoleRegions $ do
     fs <- forM ([0..100] :: [Int]) $ \i -> do
         pg <- newProgressBar def { pgWidth = 100
+                                 , pgFormat = "pg " ++ show i ++ " " ++ (pgFormat def)
                                  , pgOnCompletion = Just $ "pg " ++ show i ++ " is Done!"
                                  }
         speed <- (* 100000) <$> randomRIO (3, 10)

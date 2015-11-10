@@ -28,7 +28,7 @@ data Options = Options { pgFormat        :: String
                        -- bar
                        , pgPendingChar   :: Char
                        -- ^ Character to be used on the pending part of the bar
-                       , pgTotal         :: Int
+                       , pgTotal         :: Integer
                        -- ^ Total amount of ticks expected
                        , pgWidth         :: Int
                        -- ^ The progress bar's width
@@ -50,16 +50,16 @@ instance Default Options where
 -- The progress bar's state object. Contains all but the printing thread's
 -- @Async@ object.
 data ProgressBarInfo = ProgressBarInfo { pgOptions   :: Options
-                                       , pgChannel   :: Chan Int
-                                       , pgCompleted :: MVar Int
+                                       , pgChannel   :: Chan Integer
+                                       , pgCompleted :: MVar Integer
                                        , pgFirstTick :: MVar UTCTime
                                        }
 
 -- |
 -- Represents a point in time for the progress bar.
-data Stats = Stats { stTotal     :: Int
-                   , stCompleted :: Int
-                   , stRemaining :: Int
+data Stats = Stats { stTotal     :: Integer
+                   , stCompleted :: Integer
+                   , stRemaining :: Integer
                    , stElapsed   :: Double
                    , stPercent   :: Double
                    , stEta       :: Double
@@ -131,7 +131,7 @@ getElapsed initTime currentTime = realToFrac (diffUTCTime currentTime initTime)
 -- 10.0
 -- >>> getEta 30 70 23.3
 -- 54.366666666666674
-getEta :: Int -> Int -> Double -> Double
+getEta :: Integer -> Integer -> Double -> Double
 getEta 0 _ _ = 0
 getEta completed remaining elapsed = averageSecsPerTick * fromIntegral remaining
   where

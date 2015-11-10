@@ -8,6 +8,7 @@ module System.Console.AsciiProgress
     , complete
     , tick
     , tickN
+    , tickNI
     , getProgressStrIO
     , getProgressStats
     , getProgressStr
@@ -95,7 +96,12 @@ tick pg = tickN pg 1
 -- |
 -- Tick the progress bar N times
 tickN :: ProgressBar -> Int -> IO ()
-tickN (ProgressBar info _) = writeChan (pgChannel info)
+tickN (ProgressBar info _) = writeChan (pgChannel info) . fromIntegral
+
+-- |
+-- Tick the progress bar N times
+tickNI :: ProgressBar -> Integer -> IO ()
+tickNI (ProgressBar info _) = writeChan (pgChannel info)
 
 -- |
 -- Returns if the progress bar rendering thread has exited (it has done enough
@@ -108,7 +114,7 @@ isComplete (ProgressBar _ future) = isJust <$> poll future
 complete :: ProgressBar -> IO ()
 complete pg@(ProgressBar info future) = do
     let total = pgTotal (pgOptions info)
-    tickN pg total
+    tickNI pg total
     wait future
 
 -- |

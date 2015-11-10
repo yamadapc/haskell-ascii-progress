@@ -1,4 +1,4 @@
-FROM prettynatty/ghc-7.6
+FROM haskell:7.8
 
 RUN cabal update
 

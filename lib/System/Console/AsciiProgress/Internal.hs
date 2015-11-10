@@ -4,12 +4,10 @@
 module System.Console.AsciiProgress.Internal
   where
 
-import           Control.Concurrent (Chan, newChan, newEmptyMVar, newMVar,
-                                     readMVar, tryPutMVar)
+import           Control.Concurrent (Chan, MVar, newChan, newEmptyMVar, newMVar,
+                                     readMVar, tryPutMVar, tryTakeMVar)
 import           Data.Default       (Default (..))
 import           Data.Time.Clock
-import           GHC.Base           (IO (..), tryReadMVar#)
-import           GHC.MVar           (MVar (..))
 import           Text.Printf
 
 -- |
@@ -183,7 +181,7 @@ replace old new target@(t:ts) =
 -- assumed that once the MVar becomes full, it won't ever be left emptied. This
 -- code may deadlock if that's the case.
 forceReadMVar :: MVar a -> a -> IO a
-forceReadMVar mv v = tryReadMVar mv >>= \m -> case m of
+forceReadMVar mv v = tryTakeMVar mv >>= \m -> case m of
     Nothing -> do
         success <- tryPutMVar mv v
         if success
@@ -191,14 +189,3 @@ forceReadMVar mv v = tryReadMVar mv >>= \m -> case m of
            else readMVar mv
     Just o -> return o
 
--- Monkey patch base < 4.7
--- |A non-blocking version of 'readMVar'.  The 'tryReadMVar' function
--- returns immediately, with 'Nothing' if the 'MVar' was empty, or
--- @'Just' a@ if the 'MVar' was full with contents @a@.
---
--- /Since: 4.7.0.0/
-tryReadMVar :: MVar a -> IO (Maybe a)
-tryReadMVar (MVar m) = IO $ \s ->
-    case tryReadMVar# m s of
-        (# s', 0#, _ #) -> (# s', Nothing #)      -- MVar is empty
-        (# s', _,  a #) -> (# s', Just a  #)      -- MVar is full

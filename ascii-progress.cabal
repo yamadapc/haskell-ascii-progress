@@ -1,5 +1,5 @@
 name:                ascii-progress
-version:             0.2.1.2
+version:             0.3.0.0
 synopsis:            A simple progress bar for the console.
 description:
     A simple Haskell progress bar for the console. Heavily borrows from TJ
@@ -28,8 +28,7 @@ flag examples
 library
   exposed-modules:     System.Console.AsciiProgress
                      , System.Console.AsciiProgress.Internal
-  build-depends:       ansi-terminal
-                     , concurrent-output
+  build-depends:       concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -45,8 +44,7 @@ executable example
     buildable: False
   else
     buildable: True
-    build-depends:     ansi-terminal
-                     , concurrent-output
+    build-depends:     concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -63,8 +61,7 @@ executable download-example
   else
     buildable: True
     build-depends:     HTTP
-                     , concurrent-output
-                     , ansi-terminal
+                     , concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , bytestring
@@ -85,8 +82,7 @@ executable multi-example
     buildable: False
   else
     buildable: True
-    build-depends:     ansi-terminal
-                     , concurrent-output
+    build-depends:     concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -102,8 +98,7 @@ executable crazy-multi-example
     buildable: False
   else
     buildable: True
-    build-depends:     ansi-terminal
-                     , concurrent-output
+    build-depends:     concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3
@@ -115,8 +110,7 @@ executable crazy-multi-example
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
-  build-depends:       ansi-terminal
-                     , concurrent-output
+  build-depends:       concurrent-output >= 1.7
                      , async >= 2.0.1.5
                      , base >=4 && <5
                      , data-default >= 0.5.3

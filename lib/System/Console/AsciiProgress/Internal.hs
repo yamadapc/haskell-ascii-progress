@@ -33,7 +33,8 @@ data Options = Options { pgFormat        :: String
                        , pgWidth         :: Int
                        -- ^ The progress bar's width
                        , pgOnCompletion  :: Maybe String
-                       -- ^ What to output when the progress bar is done
+                       -- ^ What to output when the progress bar is done. The same format placeholders used
+                       -- in `pgFormat` may be used.
                        }
 
 instance Default Options where

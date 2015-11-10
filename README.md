@@ -90,9 +90,9 @@ The total amount of ticks for the bar to be completed
 ### `pgWidth :: Int`
 The progress bar's total width in columns
 
-### `pgOnCompletion :: IO ()`
-An IO action to be executed on completion, with the cursor set at progress
-bar's line
+### `pgOnCompletion :: Maybe String`
+What to output when the progress bar is done. The same format placeholders used
+in `pgFormat` may be used.
 
 ## License
 This code is licensed under the MIT license for Pedro Tacla Yamada. For more

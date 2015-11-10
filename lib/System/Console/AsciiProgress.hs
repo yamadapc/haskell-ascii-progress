@@ -30,6 +30,7 @@ import           System.Console.Regions
 
 data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
                                , pgFuture :: Async ()
+                               , pgRegion :: ConsoleRegion
                                }
 
 -- |
@@ -65,7 +66,7 @@ newProgressBar opts = do
     setConsoleRegion region pgStr
 
     future <- async $ start info region
-    return $ ProgressBar info future
+    return $ ProgressBar info future region
   where
     start info@ProgressBarInfo{..} region = do
        c <- readMVar pgCompleted
@@ -96,23 +97,23 @@ tick pg = tickN pg 1
 -- |
 -- Tick the progress bar N times
 tickN :: ProgressBar -> Int -> IO ()
-tickN (ProgressBar info _) = writeChan (pgChannel info) . fromIntegral
+tickN (ProgressBar info _ _) = writeChan (pgChannel info) . fromIntegral
 
 -- |
 -- Tick the progress bar N times
 tickNI :: ProgressBar -> Integer -> IO ()
-tickNI (ProgressBar info _) = writeChan (pgChannel info)
+tickNI (ProgressBar info _ _) = writeChan (pgChannel info)
 
 -- |
 -- Returns if the progress bar rendering thread has exited (it has done enough
 -- ticks)
 isComplete :: ProgressBar -> IO Bool
-isComplete (ProgressBar _ future) = isJust <$> poll future
+isComplete (ProgressBar _ future _) = isJust <$> poll future
 
 -- |
 -- Forces a 'ProgressBar' to finish
 complete :: ProgressBar -> IO ()
-complete pg@(ProgressBar info future) = do
+complete pg@(ProgressBar info future _) = do
     let total = pgTotal (pgOptions info)
     tickNI pg total
     wait future
@@ -120,11 +121,11 @@ complete pg@(ProgressBar info future) = do
 -- |
 -- Gets the progress bar current @Stats @object
 getProgressStats :: ProgressBar -> IO Stats
-getProgressStats (ProgressBar info _) = getInfoStats info
+getProgressStats (ProgressBar info _ _) = getInfoStats info
 
 -- |
 -- Like @getProgressStr@ but works on the @ProgressBar@ object and uses the IO
 -- monad.
 getProgressStrIO :: ProgressBar -> IO String
-getProgressStrIO (ProgressBar info _) =
+getProgressStrIO (ProgressBar info _ _) =
     getProgressStr (pgOptions info) <$> getInfoStats info

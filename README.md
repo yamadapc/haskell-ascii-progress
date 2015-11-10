@@ -21,11 +21,11 @@ cabal install ascii-progress
 ```haskell
 import Control.Concurrent (threadDelay)
 import Control.Monad (unless)
-import System.Console.AsciiProgress (Options(..), isComplete, def,
-                                     newProgressBar, tick)
+import System.Console.AsciiProgress (Options(..), displayConsoleRegions,
+                                     isComplete, def, newProgressBar, tick)
 
 main :: IO ()
-main = do
+main = displayConsoleRegions $ do
     pg <- newProgressBar def { pgWidth = 50 }
     loop pg
   where

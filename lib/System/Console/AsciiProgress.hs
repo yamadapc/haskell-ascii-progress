@@ -1,4 +1,3 @@
-
 {-# LANGUAGE RecordWildCards #-}
 module System.Console.AsciiProgress
     ( ProgressBar(..)
@@ -12,52 +11,49 @@ module System.Console.AsciiProgress
     , getProgressStrIO
     , getProgressStats
     , getProgressStr
-    , registerLn
     -- Re-exports:
     , Default(..)
     , module System.Console.Regions
-    , module System.Console.Concurrent
     )
   where
+
 import           Control.Applicative                   ((<$>))
-import           Control.Concurrent                    (MVar, forkIO,
-                                                        modifyMVar, modifyMVar_,
-                                                        newMVar, readChan,
+import           Control.Concurrent                    (modifyMVar_, readChan,
                                                         readMVar, writeChan)
-import           Control.Concurrent.Async
-import           Debug.Trace
--- (Async, async, poll,
-                                                        -- wait)
+import           Control.Concurrent.Async              (Async (..), async, poll,
+                                                        wait)
 import           Data.Default                          (Default (..))
 import           Data.Maybe                            (fromMaybe, isJust)
-import           System.Console.ANSI                   (clearLine, cursorDown,
-                                                        cursorUp,
-                                                        setCursorColumn)
 import           System.Console.AsciiProgress.Internal
-import           System.Console.Concurrent
 import           System.Console.Regions
-import           System.IO                             (BufferMode (..),
-                                                        hPutStrLn,
-                                                        hSetBuffering, stderr,
-                                                        stdout)
-import           System.IO.Unsafe                      (unsafePerformIO)
 
 data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
                                , pgFuture :: Async ()
                                }
 
-nlines :: MVar Int
-nlines = unsafePerformIO (newMVar 0)
-
--- |
--- Registers a new line for multiple progress bars
-registerLn :: IO ()
-registerLn = modifyMVar_ nlines (\n -> return $ n + 1)
-
 -- |
 -- Creates a new progress bar with the given @Options@. Multiple progress bars
--- may be created as long as everytime a line is outputted by your program,
--- while progress bars run is followed by a call to `registerLn`
+-- may be created. This package depends on `concurrent-output`, so it's --
+-- necessary that progress-bar usage is wrapped with a call to
+-- 'displayConsoleRegions'.
+--
+-- > import           Control.Concurrent           (threadDelay)
+-- > import           Control.Monad                (unless)
+-- > import           System.Console.AsciiProgress
+-- >
+-- > main :: IO ()
+-- > main = do
+-- >    pg <- newProgressBar def { pgWidth = 100
+-- >                             , pgOnCompletion = Just "Done :percent after :elapsed seconds"
+-- >                             }
+-- >    loop pg
+-- >  where
+-- >    loop pg = do
+-- >        b <- isComplete pg
+-- >        unless b $ do
+-- >            threadDelay $ 200 * 1000
+-- >            tick pg
+-- >            loop pg
 newProgressBar :: Options -> IO ProgressBar
 newProgressBar opts = do
     region <- openConsoleRegion Linear
@@ -81,7 +77,7 @@ newProgressBar opts = do
         unlessDone _ _ = do
             let fmt = fromMaybe (pgFormat opts) (pgOnCompletion opts)
             onCompletion <- getProgressStr opts { pgFormat = fmt } <$> getInfoStats info
-            finishConsoleRegion region onCompletion
+            setConsoleRegion region onCompletion
 
     handleMessage info region n = do
         -- Update the completed tick count

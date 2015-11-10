@@ -94,6 +94,10 @@ The progress bar's total width in columns
 What to output when the progress bar is done. The same format placeholders used
 in `pgFormat` may be used.
 
+### `pgGetProgressStr :: Options -> Stats -> String`
+If all else fails, you can provide a function which determines how a
+progress-bar is rendered.
+
 ## License
 This code is licensed under the MIT license for Pedro Tacla Yamada. For more
 information please refer to the [LICENSE](/LICENSE) file.

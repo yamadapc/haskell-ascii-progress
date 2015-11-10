@@ -14,7 +14,7 @@ import           Text.Printf
 
 -- |
 -- The progress bar's options.
-data Options = Options { pgFormat        :: String
+data Options = Options { pgFormat         :: String
                        -- ^ A format string for the progress bar. Currently the
                        -- following format strings are supported:
                        -- - ":eta" (ETA displayed in seconds)
@@ -23,18 +23,19 @@ data Options = Options { pgFormat        :: String
                        -- - ":percent" (percentage completed)
                        -- - ":elapsed" (elapsed time in seconds)
                        -- - ":bar" (the actual progress bar)
-                       , pgCompletedChar :: Char
+                       , pgCompletedChar  :: Char
                        -- ^ Character to be used on the completed part of the
                        -- bar
-                       , pgPendingChar   :: Char
+                       , pgPendingChar    :: Char
                        -- ^ Character to be used on the pending part of the bar
-                       , pgTotal         :: Integer
+                       , pgTotal          :: Integer
                        -- ^ Total amount of ticks expected
-                       , pgWidth         :: Int
+                       , pgWidth          :: Int
                        -- ^ The progress bar's width
-                       , pgOnCompletion  :: Maybe String
+                       , pgOnCompletion   :: Maybe String
                        -- ^ What to output when the progress bar is done. The same format placeholders used
                        -- in `pgFormat` may be used.
+                       , pgGetProgressStr :: Options -> Stats -> String
                        }
 
 instance Default Options where
@@ -45,6 +46,7 @@ instance Default Options where
                   , pgTotal = 20
                   , pgWidth = 80
                   , pgOnCompletion = Nothing
+                  , pgGetProgressStr = getProgressStr
                   }
 
 -- |

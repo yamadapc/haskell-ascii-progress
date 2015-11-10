@@ -62,7 +62,7 @@ newProgressBar opts = do
     info <- newProgressBarInfo opts
 
     -- Display initial progress-bar
-    pgStr <- getProgressStr opts <$> getInfoStats info
+    pgStr <- pgGetProgressStr opts opts <$> getInfoStats info
     setConsoleRegion region pgStr
 
     future <- async $ start info region
@@ -78,7 +78,7 @@ newProgressBar opts = do
         unlessDone c action | c < pgTotal opts = action
         unlessDone _ _ = do
             let fmt = fromMaybe (pgFormat opts) (pgOnCompletion opts)
-            onCompletion <- getProgressStr opts { pgFormat = fmt } <$> getInfoStats info
+            onCompletion <- pgGetProgressStr opts opts { pgFormat = fmt } <$> getInfoStats info
             setConsoleRegion region onCompletion
 
     handleMessage info region n = do
@@ -86,7 +86,7 @@ newProgressBar opts = do
         modifyMVar_ (pgCompleted info) (\c -> return (c + n))
         -- Find and update the current and first tick times:
         stats <- getInfoStats info
-        let progressStr = getProgressStr opts stats
+        let progressStr = pgGetProgressStr opts opts stats
         setConsoleRegion region progressStr
 
 -- |

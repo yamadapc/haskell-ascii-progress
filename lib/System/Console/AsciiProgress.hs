@@ -44,7 +44,7 @@ data ProgressBar = ProgressBar { pgInfo   :: ProgressBarInfo
 -- > import           System.Console.AsciiProgress
 -- >
 -- > main :: IO ()
--- > main = do
+-- > main = displayConsoleRegions $ do
 -- >    pg <- newProgressBar def { pgWidth = 100
 -- >                             , pgOnCompletion = Just "Done :percent after :elapsed seconds"
 -- >                             }

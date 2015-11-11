@@ -4,5 +4,5 @@ flags:
 packages:
 - '.'
 extra-deps:
-- concurrent-output-1.2.0
+- concurrent-output-1.7.0
 resolver: lts-3.10

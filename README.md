@@ -81,6 +81,11 @@ main = do
 ### `pgCompletedChar :: Char`
 The character used on the completed part of the bar
 
+There's an example which mimicks the NPM3 progress-bar. It looks like:
+```
+Working ╢████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░╟
+```
+
 ### `pgPendingChar :: Char`
 The character used on the completed part of the bar
 

@@ -1,11 +1,10 @@
 {-# LANGUAGE MagicHash       #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UnboxedTuples   #-}
 module System.Console.AsciiProgress.Internal
   where
 
 import           Control.Concurrent (Chan, MVar, newChan, newEmptyMVar, newMVar,
-                                     readMVar, tryPutMVar, tryTakeMVar)
+                                     readMVar, tryPutMVar, tryReadMVar)
 import           Data.Default       (Default (..))
 import           Data.Time.Clock
 import           Text.Printf
@@ -181,7 +180,7 @@ replace old new target@(t:ts) =
 -- assumed that once the MVar becomes full, it won't ever be left emptied. This
 -- code may deadlock if that's the case.
 forceReadMVar :: MVar a -> a -> IO a
-forceReadMVar mv v = tryTakeMVar mv >>= \m -> case m of
+forceReadMVar mv v = tryReadMVar mv >>= \m -> case m of
     Nothing -> do
         success <- tryPutMVar mv v
         if success

@@ -17,6 +17,7 @@ copyright:           (c) 2015 Pedro Tacla Yamada
 category:            System
 build-type:          Simple
 cabal-version:       >=1.10
+
 source-repository head
   type:     git
   location: git://github.com/yamadapc/haskell-ascii-progress

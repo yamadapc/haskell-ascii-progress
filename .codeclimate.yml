@@ -1,0 +1,14 @@
+---
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - haskell
+  hlint:
+    enabled: true
+  fixme:
+    enabled: true
+ratings:
+  paths:
+  - "**.hs"

@@ -8,4 +8,4 @@
   :LOGBOOK:
   CLOCK: [2015-11-07 Sat 09:26]--[2015-11-07 Sat 10:55] =>  1:29
   :END:
-* TODO Use [[hackage.haskell.org/package/concurrent-output][concurrent-output]]
+* DONE Use [[hackage.haskell.org/package/concurrent-output][concurrent-output]]

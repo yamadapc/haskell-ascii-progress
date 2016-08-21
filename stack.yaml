@@ -1,8 +1,7 @@
 flags:
   ascii-progress:
-    examples: false
+    examples: true
 packages:
 - '.'
-extra-deps:
-- concurrent-output-1.7.0
-resolver: lts-3.10
+extra-deps: []
+resolver: lts-6.12

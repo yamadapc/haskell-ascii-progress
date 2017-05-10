@@ -2,22 +2,21 @@ ascii-progress
 ==============
 [![hackage version](https://img.shields.io/hackage/v/ascii-progress.svg)](http://hackage.haskell.org/package/ascii-progress)
 [![Build Status](https://travis-ci.org/yamadapc/haskell-ascii-progress.svg?branch=master)](https://travis-ci.org/yamadapc/haskell-ascii-progress)
+[![packagename on Stackage LTS 8](https://www.stackage.org/package/ascii-progress/badge/lts-8)](http://stackage.org/lts-8/package/ascii-progress)
+[![packagename on Stackage Nightly](http://stackage.org/package/ascii-progress/badge/nightly)](http://stackage.org/nightly/package/ascii-progress)
+
 - - -
+
 A simple Haskell progress bar for the console. Heavily borrows from TJ
 Holowaychuk's Node.JS project [progress](https://github.com/tj/node-progress).
 
 ![demo](/demo.gif)
 
-## Installing
-This package is published to hackage as
-[`ascii-progress`](http://hackage.haskell.org/package/ascii-progress), so you
-can install it with:
+[**Packages Using `ascii-progress`**](http://packdeps.haskellers.com/reverse/ascii-progress)
+- [`codex`](http://hackage.haskell.org/package/codex)
+- [`xdcc`](http://hackage.haskell.org/package/xdcc)
 
-```
-cabal install ascii-progress
-```
-
-## Usage
+## Basic Usage
 ```haskell
 import Control.Concurrent (threadDelay)
 import Control.Monad (unless)
@@ -36,6 +35,8 @@ main = displayConsoleRegions $ do
             tick pg
             loop pg
 ```
+
+[Full documentation on hackage](http://hackage.haskell.org/package/ascii-progress)
 
 ## Multiple progress bar support
 Though still rudimentary, there's support for running multiple concurrent
@@ -103,9 +104,18 @@ in `pgFormat` may be used.
 If all else fails, you can provide a function which determines how a
 progress-bar is rendered.
 
+## Installing
+This package is published to hackage as
+[`ascii-progress`](http://hackage.haskell.org/package/ascii-progress), so you
+can install it with:
+
+```
+cabal install ascii-progress
+```
+
+It's also part of stackage.
+
+
 ## License
 This code is licensed under the MIT license for Pedro Tacla Yamada. For more
 information please refer to the [LICENSE](/LICENSE) file.
-
-## Donations
-Would you like to buy me a beer? Send bitcoin to 3JjxJydvoJjTrhLL86LGMc8cNB16pTAF3y
